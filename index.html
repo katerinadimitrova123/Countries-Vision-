@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Countries Vision</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "earcut": "https://cdn.jsdelivr.net/npm/earcut@2.2.4/+esm",
+      "topojson-client": "https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm",
+      "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/+esm"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="start-screen">
+    <h1>Countries Vision</h1>
+    <p>Find the country on the globe using your hand.</p>
+    <ul class="instructions">
+      <li><strong>Open palm</strong> &mdash; drag to rotate the globe</li>
+      <li><strong>Point</strong> &mdash; the cursor follows your index finger; the country under it turns blue</li>
+      <li><strong>Make a fist</strong> &mdash; hold for 3 seconds to select</li>
+      <li><strong>Clap your hands</strong> &mdash; the world explodes 💥</li>
+    </ul>
+    <button id="start-btn">Start Game</button>
+    <p class="note">Allow camera access when prompted.</p>
+  </div>
+
+  <div id="ui" class="hidden">
+    <div id="prompt">Find <span id="country-name">...</span></div>
+    <div id="score-box">Score: <span id="score-value">0</span></div>
+  </div>
+  <div id="status" class="hidden"></div>
+  <div id="select-progress" class="hidden"><div id="select-fill"></div></div>
+
+  <div id="flash"></div>
+  <div id="clap-debug"></div>
+  <video id="video" autoplay playsinline muted></video>
+  <div id="cursor" class="hidden"></div>
+  <canvas id="globe"></canvas>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
