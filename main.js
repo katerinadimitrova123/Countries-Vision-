@@ -77,13 +77,20 @@ const EXPLOSION_DURATION = 5000;
 const EXPLODE_OUT_MS = 900;
 const EXPLODE_RETURN_MS = 1100;
 const EXPLODE_DISTANCE = 1.6;
-const CLAP_CLOSE_THRESHOLD = 0.22;     // hands close enough = clap impact
-const CLAP_APART_THRESHOLD = 0.32;     // need to have been at least this far in the recent past
-const CLAP_HISTORY_MS = 800;           // sliding window for "recently apart"
+const CLAP_CLOSE_THRESHOLD = 0.18;     // hands close enough = clap impact
+const CLAP_CLOSING_SPEED = 0.7;        // units / sec — fast inward motion to count as a clap (not a zoom)
+const CLAP_HISTORY_MS = 600;           // sliding window for velocity calc
 let explosionState = 'none'; // 'none' | 'active'
 let explosionStartAt = 0;
 let clapCooldownUntil = 0;
 const clapHistory = []; // [{ t, d }]
+
+// Zoom state (two-hand spread controls camera distance)
+const ZOOM_NEAR = 1.8;     // closest camera position
+const ZOOM_FAR = 4.6;      // farthest camera position
+const HAND_DIST_NEAR = 0.10; // hands touching
+const HAND_DIST_FAR = 0.55;  // hands wide apart
+let cameraTargetZ = camera.position.z;
 
 function isLocked() {
   const now = performance.now();
@@ -281,13 +288,28 @@ function checkClap(handData) {
 
   if (now < clapCooldownUntil) return;
 
-  if (d < CLAP_CLOSE_THRESHOLD) {
-    const recentMax = clapHistory.reduce((m, e) => Math.max(m, e.d), 0);
-    if (recentMax > CLAP_APART_THRESHOLD) {
-      triggerExplosion();
-      clapCooldownUntil = now + EXPLOSION_DURATION + 1000;
-    }
+  // Find an older sample (~300-500ms ago) to compute closing velocity
+  const oldSample = clapHistory.find((s) => now - s.t >= 300);
+  if (!oldSample) return;
+  const dt = (now - oldSample.t) / 1000;
+  const closingSpeed = (oldSample.d - d) / dt; // positive = closing
+
+  if (closingSpeed > CLAP_CLOSING_SPEED && d < CLAP_CLOSE_THRESHOLD) {
+    triggerExplosion();
+    clapCooldownUntil = now + EXPLOSION_DURATION + 1000;
   }
+}
+
+function updateZoomFromHands(handData) {
+  if (explosionState !== 'none') return;
+  if (!handData || handData.twoHandsDist == null) return;
+  const raw = Math.max(
+    HAND_DIST_NEAR,
+    Math.min(HAND_DIST_FAR, handData.twoHandsDist)
+  );
+  const t = (raw - HAND_DIST_NEAR) / (HAND_DIST_FAR - HAND_DIST_NEAR);
+  // Wider hands → t closer to 1 → camera closer (smaller z)
+  cameraTargetZ = ZOOM_FAR + t * (ZOOM_NEAR - ZOOM_FAR);
 }
 
 function updateExplosion() {
@@ -328,6 +350,7 @@ let cursorPos = { x: 0.5, y: 0.5 };
 
 function onHand(handData) {
   checkClap(handData);
+  updateZoomFromHands(handData);
 
   if (!handData) {
     currentGesture = 'none';
@@ -385,6 +408,9 @@ function animate() {
     rotVelX *= ROT_DAMP;
     rotVelY *= ROT_DAMP;
   }
+
+  // Smooth camera zoom
+  camera.position.z += (cameraTargetZ - camera.position.z) * 0.15;
 
   updateHover();
   handleSelection();
