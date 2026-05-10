@@ -7,10 +7,11 @@ export const RADIUS = 1;
 function lngLatToVec3(lng, lat, radius = RADIUS) {
   const phi = (lat * Math.PI) / 180;
   const lambda = (lng * Math.PI) / 180;
-  const x = radius * Math.cos(phi) * Math.cos(lambda);
-  const y = radius * Math.sin(phi);
-  const z = -radius * Math.cos(phi) * Math.sin(lambda);
-  return new THREE.Vector3(x, y, z);
+  return new THREE.Vector3(
+    radius * Math.cos(phi) * Math.cos(lambda),
+    radius * Math.sin(phi),
+    -radius * Math.cos(phi) * Math.sin(lambda)
+  );
 }
 
 function ringCrossesAntimeridian(ring) {
@@ -20,12 +21,67 @@ function ringCrossesAntimeridian(ring) {
   return false;
 }
 
+function unwrapRing(ring) {
+  if (!ringCrossesAntimeridian(ring)) return ring;
+  return ring.map(([lng, lat]) => [lng < 0 ? lng + 360 : lng, lat]);
+}
+
+function buildUVSphere(radius, segments, rings) {
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+  for (let r = 0; r <= rings; r++) {
+    const lat = 90 - (r / rings) * 180;
+    const phi = (lat * Math.PI) / 180;
+    for (let s = 0; s <= segments; s++) {
+      const lng = -180 + (s / segments) * 360;
+      const lambda = (lng * Math.PI) / 180;
+      positions.push(
+        radius * Math.cos(phi) * Math.cos(lambda),
+        radius * Math.sin(phi),
+        -radius * Math.cos(phi) * Math.sin(lambda)
+      );
+      uvs.push(s / segments, 1 - r / rings);
+    }
+  }
+  for (let r = 0; r < rings; r++) {
+    for (let s = 0; s < segments; s++) {
+      const a = r * (segments + 1) + s;
+      const b = a + 1;
+      const c = a + segments + 1;
+      const d = c + 1;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
+}
+
 export async function buildGlobe(parent) {
-  const oceanGeo = new THREE.SphereGeometry(RADIUS * 0.998, 96, 96);
-  const oceanMat = new THREE.MeshBasicMaterial({ color: 0x0e1a2b });
-  const ocean = new THREE.Mesh(oceanGeo, oceanMat);
+  // ---------- NASA Blue Marble visual sphere ----------
+  const textureLoader = new THREE.TextureLoader();
+  textureLoader.crossOrigin = 'anonymous';
+  const earthTexture = await new Promise((resolve, reject) => {
+    textureLoader.load(
+      'https://unpkg.com/three-globe@2.34.4/example/img/earth-blue-marble.jpg',
+      resolve,
+      undefined,
+      reject
+    );
+  });
+  earthTexture.colorSpace = THREE.SRGBColorSpace;
+  earthTexture.anisotropy = 8;
+
+  const sphereGeo = buildUVSphere(RADIUS, 128, 64);
+  const sphereMat = new THREE.MeshBasicMaterial({ map: earthTexture });
+  const ocean = new THREE.Mesh(sphereGeo, sphereMat);
   parent.add(ocean);
 
+  // ---------- Country interaction layer ----------
   const res = await fetch(
     'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
   );
@@ -49,41 +105,29 @@ export async function buildGlobe(parent) {
     let vertexOffset = 0;
 
     for (const polygon of polygons) {
-      const outer = polygon[0];
-      const skipFill = ringCrossesAntimeridian(outer);
-
-      // Borders: always draw
+      // Borders (skip antimeridian wrap segment)
       for (const ring of polygon) {
         for (let i = 0; i < ring.length - 1; i++) {
           const [lng1, lat1] = ring[i];
           const [lng2, lat2] = ring[i + 1];
-          if (Math.abs(lng2 - lng1) > 180) continue; // skip antimeridian wrap segment
-          const a = lngLatToVec3(lng1, lat1, RADIUS * 1.003);
-          const b = lngLatToVec3(lng2, lat2, RADIUS * 1.003);
+          if (Math.abs(lng2 - lng1) > 180) continue;
+          const a = lngLatToVec3(lng1, lat1, RADIUS * 1.005);
+          const b = lngLatToVec3(lng2, lat2, RADIUS * 1.005);
           linePositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
         }
       }
 
-      if (skipFill) continue;
-
+      // Fill: outer ring only, with antimeridian unwrap so every country
+      // (including Russia / USA-Alaska) gets a hover mesh.
+      const outerRing = unwrapRing(polygon[0]);
       const flatCoords = [];
-      const holes = [];
-      let cursor = 0;
-      for (let r = 0; r < polygon.length; r++) {
-        const ring = polygon[r];
-        if (r > 0) holes.push(cursor);
-        for (const [lng, lat] of ring) {
-          flatCoords.push(lng, lat);
-          cursor++;
-        }
-      }
-
-      const indices = earcut(flatCoords, holes, 2);
+      for (const [lng, lat] of outerRing) flatCoords.push(lng, lat);
+      const indices = earcut(flatCoords, [], 2);
       if (indices.length === 0) continue;
 
       const positions = [];
       for (let i = 0; i < flatCoords.length; i += 2) {
-        const v = lngLatToVec3(flatCoords[i], flatCoords[i + 1], RADIUS * 1.001);
+        const v = lngLatToVec3(flatCoords[i], flatCoords[i + 1], RADIUS * 1.012);
         positions.push(v.x, v.y, v.z);
       }
 
@@ -100,14 +144,20 @@ export async function buildGlobe(parent) {
       new THREE.Float32BufferAttribute(meshPositions, 3)
     );
     geometry.setIndex(meshIndices);
-    geometry.computeVertexNormals();
 
     const baseColor = 0xf2efe6;
+    // Transparent at opacity 0 by default — invisible, but raycaster still
+    // hits it. main.js bumps opacity to 1 on hover/reveal/explosion.
     const material = new THREE.MeshBasicMaterial({
       color: baseColor,
       side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      depthTest: false,
     });
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.renderOrder = 10;
     mesh.userData.name = name;
     mesh.userData.baseColor = baseColor;
     countryMeshes.push(mesh);
@@ -116,12 +166,18 @@ export async function buildGlobe(parent) {
 
   parent.add(countriesGroup);
 
+  // White-ish border lines so countries are visually delineated against
+  // the photorealistic texture.
   const lineGeo = new THREE.BufferGeometry();
   lineGeo.setAttribute(
     'position',
     new THREE.Float32BufferAttribute(linePositions, 3)
   );
-  const lineMat = new THREE.LineBasicMaterial({ color: 0x000000 });
+  const lineMat = new THREE.LineBasicMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.55,
+  });
   const lines = new THREE.LineSegments(lineGeo, lineMat);
   parent.add(lines);
 

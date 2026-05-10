@@ -65,12 +65,57 @@ let fistHoldStart = null;
 let lockedAt = 0;
 const FIST_HOLD_MS = 3000;
 const LOCKOUT_MS = 800; // brief lockout after a correct pick
-const REVEAL_MS = 2500; // how long the actual country stays red after a wrong pick
+const REVEAL_MS = 4500; // how long the actual country stays red after a wrong pick
 let revealMesh = null;
+let redOverlay = null;
 let revealEndAt = 0;
 let revealRotateActive = false;
 let revealTargetRotX = 0;
 let revealTargetRotY = 0;
+
+function showRedOverlay(target) {
+  hideRedOverlay();
+
+  // Build a country-shaped red layer by cloning the country's geometry and
+  // pushing every vertex outward so it sits clearly above the globe surface.
+  const geo = target.geometry.clone();
+  const pos = geo.attributes.position;
+  const LIFT = 0.08;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const len = Math.hypot(x, y, z) || 1;
+    const s = (len + LIFT) / len;
+    pos.setXYZ(i, x * s, y * s, z * s);
+  }
+  pos.needsUpdate = true;
+  geo.computeBoundingSphere();
+
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xcc0000,
+    side: THREE.DoubleSide,
+    depthTest: false,
+    depthWrite: false,
+    transparent: true,
+    opacity: 1,
+  });
+  const shape = new THREE.Mesh(geo, mat);
+  shape.renderOrder = 99999;
+  shape.frustumCulled = false;
+
+  redOverlay = shape;
+  globeGroup.add(redOverlay);
+}
+
+function hideRedOverlay() {
+  if (redOverlay) {
+    globeGroup.remove(redOverlay);
+    redOverlay.geometry.dispose();
+    redOverlay.material.dispose();
+    redOverlay = null;
+  }
+}
 
 // Clap-explosion state
 const EXPLOSION_DURATION = 5000;
@@ -147,10 +192,12 @@ function setHovered(mesh) {
   if (hoveredMesh === mesh) return;
   if (hoveredMesh && hoveredMesh !== revealMesh) {
     hoveredMesh.material.color.setHex(hoveredMesh.userData.baseColor);
+    hoveredMesh.material.opacity = 0;
   }
   hoveredMesh = mesh;
   if (hoveredMesh && hoveredMesh !== revealMesh) {
     hoveredMesh.material.color.setHex(0x5aa4ff);
+    hoveredMesh.material.opacity = 0.85;
   }
 }
 
@@ -202,6 +249,7 @@ function handleSelection() {
         );
         if (target) {
           target.material.color.setHex(0x22c55e);
+          target.material.opacity = 0.9;
           revealMesh = target;
         }
         revealEndAt = performance.now() + REVEAL_MS;
@@ -217,7 +265,7 @@ function handleSelection() {
           (m) => m.userData.name === targetCountry
         );
         if (target) {
-          target.material.color.setHex(0xef4444);
+          showRedOverlay(target);
           revealMesh = target;
           setRevealRotationTarget(target);
           revealRotateActive = true;
@@ -238,6 +286,8 @@ function handleSelection() {
 function updateReveal() {
   if (revealMesh && performance.now() >= revealEndAt) {
     revealMesh.material.color.setHex(revealMesh.userData.baseColor);
+    revealMesh.material.opacity = 0;
+    hideRedOverlay();
     revealMesh = null;
     revealRotateActive = false;
     pickRandomCountry();
@@ -251,9 +301,11 @@ function triggerExplosion() {
   // Cancel any in-progress reveal cleanly
   if (revealMesh) {
     revealMesh.material.color.setHex(revealMesh.userData.baseColor);
+    revealMesh.material.opacity = 0;
     revealMesh = null;
     revealRotateActive = false;
   }
+  hideRedOverlay();
   fistHoldStart = null;
   fillEl.style.width = '0%';
   progressEl.classList.add('hidden');
