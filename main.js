@@ -43,19 +43,6 @@ scene.add(globeGroup);
 countryNameEl.textContent = 'Loading...';
 const { countryMeshes, ocean, lines } = await buildGlobe(globeGroup);
 
-// Precompute outward direction per country (their center on the unit sphere)
-// for the clap-explosion effect.
-const explosionDirs = new Map();
-for (const m of countryMeshes) {
-  const pos = m.geometry.attributes.position;
-  let sx = 0, sy = 0, sz = 0;
-  for (let i = 0; i < pos.count; i++) {
-    sx += pos.getX(i); sy += pos.getY(i); sz += pos.getZ(i);
-  }
-  const len = Math.hypot(sx, sy, sz) || 1;
-  explosionDirs.set(m, new THREE.Vector3(sx / len, sy / len, sz / len));
-}
-
 // ---------- Game state ----------
 let score = 0;
 let targetCountry = null;
@@ -117,19 +104,6 @@ function hideRedOverlay() {
   }
 }
 
-// Clap-explosion state
-const EXPLOSION_DURATION = 5000;
-const EXPLODE_OUT_MS = 900;
-const EXPLODE_RETURN_MS = 1100;
-const EXPLODE_DISTANCE = 1.6;
-const CLAP_CLOSE_THRESHOLD = 0.18;     // hands close enough = clap impact
-const CLAP_CLOSING_SPEED = 0.7;        // units / sec — fast inward motion to count as a clap (not a zoom)
-const CLAP_HISTORY_MS = 600;           // sliding window for velocity calc
-let explosionState = 'none'; // 'none' | 'active'
-let explosionStartAt = 0;
-let clapCooldownUntil = 0;
-const clapHistory = []; // [{ t, d }]
-
 // Zoom state (two-hand spread controls camera distance)
 const ZOOM_NEAR = 1.8;     // closest camera position
 const ZOOM_FAR = 4.6;      // farthest camera position
@@ -140,7 +114,6 @@ let cameraTargetZ = camera.position.z;
 function isLocked() {
   const now = performance.now();
   return (
-    explosionState !== 'none' ||
     now < revealEndAt ||
     now - lockedAt < LOCKOUT_MS
   );
@@ -294,66 +267,7 @@ function updateReveal() {
   }
 }
 
-function triggerExplosion() {
-  if (explosionState !== 'none') return;
-  explosionState = 'active';
-  explosionStartAt = performance.now();
-  // Cancel any in-progress reveal cleanly
-  if (revealMesh) {
-    revealMesh.material.color.setHex(revealMesh.userData.baseColor);
-    revealMesh.material.opacity = 0;
-    revealMesh = null;
-    revealRotateActive = false;
-  }
-  hideRedOverlay();
-  fistHoldStart = null;
-  fillEl.style.width = '0%';
-  progressEl.classList.add('hidden');
-  ocean.visible = false;
-  lines.visible = false;
-  setStatus('💥 BOOM 💥', '#fbbf24');
-  // Brief white screen flash
-  const flash = document.getElementById('flash');
-  if (flash) {
-    flash.classList.add('fire');
-    setTimeout(() => flash.classList.remove('fire'), 90);
-  }
-}
-
-function checkClap(handData) {
-  const now = performance.now();
-
-  // Prune old samples from the sliding window
-  while (clapHistory.length && clapHistory[0].t < now - CLAP_HISTORY_MS) {
-    clapHistory.shift();
-  }
-
-  const d = handData ? handData.twoHandsDist : null;
-  const debugEl = document.getElementById('clap-debug');
-  if (debugEl) {
-    debugEl.textContent =
-      d == null ? 'two hands: not seen' : `two hands dist: ${d.toFixed(2)}`;
-  }
-
-  if (d == null) return;
-  clapHistory.push({ t: now, d });
-
-  if (now < clapCooldownUntil) return;
-
-  // Find an older sample (~300-500ms ago) to compute closing velocity
-  const oldSample = clapHistory.find((s) => now - s.t >= 300);
-  if (!oldSample) return;
-  const dt = (now - oldSample.t) / 1000;
-  const closingSpeed = (oldSample.d - d) / dt; // positive = closing
-
-  if (closingSpeed > CLAP_CLOSING_SPEED && d < CLAP_CLOSE_THRESHOLD) {
-    triggerExplosion();
-    clapCooldownUntil = now + EXPLOSION_DURATION + 1000;
-  }
-}
-
 function updateZoomFromHands(handData) {
-  if (explosionState !== 'none') return;
   if (!handData || handData.twoHandsDist == null) return;
   const raw = Math.max(
     HAND_DIST_NEAR,
@@ -364,44 +278,11 @@ function updateZoomFromHands(handData) {
   cameraTargetZ = ZOOM_FAR + t * (ZOOM_NEAR - ZOOM_FAR);
 }
 
-function updateExplosion() {
-  if (explosionState === 'none') return;
-  const t = performance.now() - explosionStartAt;
-
-  if (t >= EXPLOSION_DURATION) {
-    for (const m of countryMeshes) m.position.set(0, 0, 0);
-    ocean.visible = true;
-    lines.visible = true;
-    explosionState = 'none';
-    return;
-  }
-
-  let distance;
-  if (t < EXPLODE_OUT_MS) {
-    const k = t / EXPLODE_OUT_MS;
-    const eased = 1 - Math.pow(1 - k, 3); // ease-out cubic
-    distance = eased * EXPLODE_DISTANCE;
-  } else if (t < EXPLOSION_DURATION - EXPLODE_RETURN_MS) {
-    distance = EXPLODE_DISTANCE;
-  } else {
-    const returnT = t - (EXPLOSION_DURATION - EXPLODE_RETURN_MS);
-    const k = returnT / EXPLODE_RETURN_MS;
-    const eased = 1 - Math.pow(1 - k, 3);
-    distance = (1 - eased) * EXPLODE_DISTANCE;
-  }
-
-  for (const m of countryMeshes) {
-    const dir = explosionDirs.get(m);
-    m.position.set(dir.x * distance, dir.y * distance, dir.z * distance);
-  }
-}
-
 // ---------- Hand input ----------
 let currentGesture = 'none';
 let cursorPos = { x: 0.5, y: 0.5 };
 
 function onHand(handData) {
-  checkClap(handData);
   updateZoomFromHands(handData);
 
   if (!handData) {
@@ -467,7 +348,6 @@ function animate() {
   updateHover();
   handleSelection();
   updateReveal();
-  updateExplosion();
 
   renderer.render(scene, camera);
 }
