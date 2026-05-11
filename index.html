@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Countries Vision</title>
-  <link rel="stylesheet" href="./style.css?v=2" />
+  <link rel="stylesheet" href="./style.css?v=4" />
   <script type="importmap">
   {
     "imports": {
@@ -23,14 +23,27 @@
   <div id="start-screen">
     <h1>Countries Vision</h1>
     <p>Find the country on the globe using your hand.</p>
-    <ul class="instructions">
-      <li><strong>Open palm</strong> &mdash; drag to rotate the globe</li>
-      <li><strong>Point</strong> &mdash; the cursor follows your index finger; the country under it turns blue</li>
-      <li><strong>Make a fist</strong> &mdash; hold for 3 seconds to select</li>
-      <li><strong>Spread two hands</strong> &mdash; zoom in / out</li>
-    </ul>
-    <button id="start-btn">Start Game</button>
-    <p class="note">Allow camera access when prompted.</p>
+    <div class="mode-grid">
+      <div class="mode-col">
+        <ul class="instructions">
+          <li><strong>Open palm</strong> &mdash; drag to rotate the globe</li>
+          <li><strong>Point</strong> &mdash; cursor follows your index finger; the country turns blue</li>
+          <li><strong>Make a fist</strong> &mdash; hold for 3 seconds to select</li>
+          <li><strong>Spread two hands</strong> &mdash; zoom in / out</li>
+        </ul>
+        <button id="start-btn">Start with hand tracking</button>
+      </div>
+      <div class="mode-col">
+        <ul class="instructions">
+          <li><strong>Mouse drag</strong> &mdash; rotate the globe</li>
+          <li><strong>Click a country</strong> &mdash; select it</li>
+          <li><strong>Scroll wheel</strong> &mdash; zoom in / out</li>
+          <li><strong>Arrow keys</strong> rotate &middot; <strong>+ / &minus;</strong> zoom &middot; <strong>Enter</strong> select</li>
+        </ul>
+        <button id="start-btn-nocam" class="secondary">Play with mouse / keyboard</button>
+      </div>
+    </div>
+    <p class="note">Hand tracking requires camera access.</p>
   </div>
 
   <div id="ui" class="hidden">
@@ -51,6 +64,6 @@
   <div id="cursor" class="hidden"></div>
   <canvas id="globe"></canvas>
 
-  <script type="module" src="./main.js?v=8"></script>
+  <script type="module" src="./main.js?v=9"></script>
 </body>
 </html>

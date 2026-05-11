@@ -262,7 +262,43 @@ const ROT_DAMP = 0.9;
 let lastHandPos = null;
 let dragMode = false;
 
-// ---------- Selection (fist hold) ----------
+// ---------- Selection ----------
+function commitSelection(mesh) {
+  if (!mesh || isLocked()) return;
+  const picked = mesh.userData.name;
+  if (picked === targetCountry) {
+    score++;
+    scoreEl.textContent = score;
+    setStatus('Correct!', '#4ade80');
+    setHovered(null);
+    const target = countryMeshes.find(
+      (m) => m.userData.name === targetCountry
+    );
+    if (target) {
+      target.material.color.setHex(0x22c55e);
+      target.material.opacity = 0.9;
+      revealMesh = target;
+    }
+    revealEndAt = performance.now() + REVEAL_MS;
+  } else {
+    setStatus(`Wrong! That was ${targetCountry}`, '#f87171');
+    score = 0;
+    scoreEl.textContent = score;
+    setHovered(null);
+    const target = countryMeshes.find(
+      (m) => m.userData.name === targetCountry
+    );
+    if (target) {
+      showRedOverlay(target);
+      revealMesh = target;
+      setRevealRotationTarget(target);
+      revealRotateActive = true;
+    }
+    revealEndAt = performance.now() + REVEAL_MS;
+  }
+}
+
+// Fist-hold (hand) selection
 function handleSelection() {
   if (isLocked()) {
     fistHoldStart = null;
@@ -277,41 +313,7 @@ function handleSelection() {
     fillEl.style.width = pct + '%';
     progressEl.classList.remove('hidden');
     if (elapsed >= FIST_HOLD_MS) {
-      const picked = hoveredMesh.userData.name;
-      if (picked === targetCountry) {
-        score++;
-        scoreEl.textContent = score;
-        setStatus('Correct!', '#4ade80');
-        // Flash the correct country in green so the user remembers where it is.
-        setHovered(null);
-        const target = countryMeshes.find(
-          (m) => m.userData.name === targetCountry
-        );
-        if (target) {
-          target.material.color.setHex(0x22c55e);
-          target.material.opacity = 0.9;
-          revealMesh = target;
-        }
-        revealEndAt = performance.now() + REVEAL_MS;
-      } else {
-        setStatus(`Wrong! That was ${targetCountry}`, '#f87171');
-        score = 0;
-        scoreEl.textContent = score;
-        // Clear hover so the wrong-picked country goes back to base color,
-        // then flash the actual target in red for REVEAL_MS while rotating
-        // the globe to center it on screen.
-        setHovered(null);
-        const target = countryMeshes.find(
-          (m) => m.userData.name === targetCountry
-        );
-        if (target) {
-          showRedOverlay(target);
-          revealMesh = target;
-          setRevealRotationTarget(target);
-          revealRotateActive = true;
-        }
-        revealEndAt = performance.now() + REVEAL_MS;
-      }
+      commitSelection(hoveredMesh);
       fistHoldStart = null;
       fillEl.style.width = '0%';
       progressEl.classList.add('hidden');
@@ -386,6 +388,114 @@ function onHand(handData) {
   }
 }
 
+// ---------- Mouse / keyboard input (desktop fallback) ----------
+let mouseDragging = false;
+let mouseDragStart = null;
+let mouseDragMoved = false;
+let lastMouseNorm = null;
+const DRAG_PX_THRESHOLD = 5;
+
+function setMouseCursor(clientX, clientY, gesture) {
+  cursorEl.classList.remove('hidden');
+  cursorEl.style.left = clientX + 'px';
+  cursorEl.style.top = clientY + 'px';
+  cursorEl.dataset.gesture = gesture;
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  const nx = e.clientX / window.innerWidth;
+  const ny = e.clientY / window.innerHeight;
+  cursorNDC.x = nx * 2 - 1;
+  cursorNDC.y = -(ny * 2 - 1);
+  setMouseCursor(e.clientX, e.clientY, mouseDragging ? 'open' : 'point');
+
+  if (mouseDragging) {
+    if (mouseDragStart) {
+      const dxPx = e.clientX - mouseDragStart.px;
+      const dyPx = e.clientY - mouseDragStart.py;
+      if (Math.hypot(dxPx, dyPx) > DRAG_PX_THRESHOLD) mouseDragMoved = true;
+    }
+    if (lastMouseNorm) {
+      const dx = nx - lastMouseNorm.x;
+      const dy = ny - lastMouseNorm.y;
+      rotVelY += dx * 5;
+      rotVelX += dy * 5;
+    }
+  }
+  lastMouseNorm = { x: nx, y: ny };
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  mouseDragging = true;
+  mouseDragMoved = false;
+  mouseDragStart = { px: e.clientX, py: e.clientY };
+  lastMouseNorm = {
+    x: e.clientX / window.innerWidth,
+    y: e.clientY / window.innerHeight,
+  };
+});
+
+window.addEventListener('mouseup', () => {
+  mouseDragging = false;
+  mouseDragStart = null;
+  lastMouseNorm = null;
+});
+
+canvas.addEventListener('click', () => {
+  // Suppress click that follows a drag-rotate
+  if (mouseDragMoved) {
+    mouseDragMoved = false;
+    return;
+  }
+  if (hoveredMesh) commitSelection(hoveredMesh);
+});
+
+canvas.addEventListener(
+  'wheel',
+  (e) => {
+    e.preventDefault();
+    const delta = e.deltaY * 0.003;
+    cameraTargetZ = Math.max(
+      ZOOM_NEAR,
+      Math.min(ZOOM_FAR, cameraTargetZ + delta)
+    );
+  },
+  { passive: false }
+);
+
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const ROT_STEP = 0.08;
+  const ZOOM_STEP = 0.25;
+  switch (e.key) {
+    case 'ArrowLeft':
+      rotVelY -= ROT_STEP;
+      break;
+    case 'ArrowRight':
+      rotVelY += ROT_STEP;
+      break;
+    case 'ArrowUp':
+      rotVelX -= ROT_STEP;
+      break;
+    case 'ArrowDown':
+      rotVelX += ROT_STEP;
+      break;
+    case '+':
+    case '=':
+      cameraTargetZ = Math.max(ZOOM_NEAR, cameraTargetZ - ZOOM_STEP);
+      break;
+    case '-':
+    case '_':
+      cameraTargetZ = Math.min(ZOOM_FAR, cameraTargetZ + ZOOM_STEP);
+      break;
+    case 'Enter':
+    case ' ':
+      if (hoveredMesh) commitSelection(hoveredMesh);
+      e.preventDefault();
+      break;
+  }
+});
+
 // ---------- Render loop ----------
 function animate() {
   requestAnimationFrame(animate);
@@ -420,24 +530,37 @@ function animate() {
 }
 
 // ---------- Start flow ----------
-startBtn.addEventListener('click', async () => {
+async function beginGame({ withHands }) {
   startBtn.disabled = true;
-  startBtn.textContent = 'Starting camera...';
-  try {
-    await setupHands(onHand);
-  } catch (err) {
-    startBtn.disabled = false;
-    startBtn.textContent = 'Start Game';
-    alert('Could not access webcam: ' + err.message);
-    return;
+  if (withHands) {
+    startBtn.textContent = 'Starting camera...';
+    try {
+      await setupHands(onHand);
+    } catch (err) {
+      startBtn.disabled = false;
+      startBtn.textContent = 'Start with hand tracking';
+      alert(
+        'Could not access webcam: ' +
+          err.message +
+          '\n\nYou can use the "Play with mouse / keyboard" button instead.'
+      );
+      return;
+    }
   }
   startScreen.classList.add('hidden');
   uiEl.classList.remove('hidden');
   pickRandomCountry();
-  // Slow auto-spin to make the globe feel alive at first
   rotVelY = 0.01;
   animate();
-});
+}
+
+startBtn.addEventListener('click', () => beginGame({ withHands: true }));
+const startNoCamBtn = document.getElementById('start-btn-nocam');
+if (startNoCamBtn) {
+  startNoCamBtn.addEventListener('click', () =>
+    beginGame({ withHands: false })
+  );
+}
 
 // Render an idle preview behind the start screen
 globeGroup.rotation.y = -1.0;
