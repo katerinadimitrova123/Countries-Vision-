@@ -433,7 +433,11 @@ function onHand(handData) {
   }
 }
 
-// ---------- Mouse / keyboard input (desktop fallback) ----------
+// ---------- Mouse / keyboard / touch input (desktop & mobile fallback) ----------
+// Gated by controlMode — only active when the user chose "manual".
+let controlMode = 'manual'; // 'hands' | 'manual'
+const isManual = () => controlMode === 'manual';
+
 let mouseDragging = false;
 let mouseDragStart = null;
 let mouseDragMoved = false;
@@ -448,6 +452,7 @@ function setMouseCursor(clientX, clientY, gesture) {
 }
 
 canvas.addEventListener('mousemove', (e) => {
+  if (!isManual()) return;
   const nx = e.clientX / window.innerWidth;
   const ny = e.clientY / window.innerHeight;
   cursorNDC.x = nx * 2 - 1;
@@ -471,6 +476,7 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 canvas.addEventListener('mousedown', (e) => {
+  if (!isManual()) return;
   mouseDragging = true;
   mouseDragMoved = false;
   mouseDragStart = { px: e.clientX, py: e.clientY };
@@ -481,6 +487,7 @@ canvas.addEventListener('mousedown', (e) => {
 });
 
 window.addEventListener('mouseup', () => {
+  if (!isManual()) return;
   mouseDragging = false;
   mouseDragStart = null;
   lastMouseNorm = null;
@@ -489,6 +496,7 @@ window.addEventListener('mouseup', () => {
 let suppressNextClick = false;
 
 canvas.addEventListener('click', () => {
+  if (!isManual()) return;
   if (mouseDragMoved || suppressNextClick) {
     mouseDragMoved = false;
     suppressNextClick = false;
@@ -508,6 +516,7 @@ function touchToNorm(t) {
 canvas.addEventListener(
   'touchstart',
   (e) => {
+    if (!isManual()) return;
     if (e.touches.length === 1) {
       const t = e.touches[0];
       const n = touchToNorm(t);
@@ -532,6 +541,7 @@ canvas.addEventListener(
 canvas.addEventListener(
   'touchmove',
   (e) => {
+    if (!isManual()) return;
     if (!touchState) return;
     e.preventDefault();
     if (touchState.mode === 'drag' && e.touches.length === 1) {
@@ -571,6 +581,7 @@ canvas.addEventListener(
 canvas.addEventListener(
   'touchend',
   () => {
+    if (!isManual()) return;
     touchState = null;
   },
   { passive: true }
@@ -579,6 +590,7 @@ canvas.addEventListener(
 canvas.addEventListener(
   'touchcancel',
   () => {
+    if (!isManual()) return;
     touchState = null;
   },
   { passive: true }
@@ -587,6 +599,7 @@ canvas.addEventListener(
 canvas.addEventListener(
   'wheel',
   (e) => {
+    if (!isManual()) return;
     e.preventDefault();
     // Trackpad pinch arrives as wheel events with ctrlKey: true on macOS/Windows.
     // Use a stronger sensitivity for pinch so it matches the gesture's feel.
@@ -602,6 +615,7 @@ canvas.addEventListener(
 );
 
 window.addEventListener('keydown', (e) => {
+  if (!isManual()) return;
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   const ROT_STEP = 0.08;
   const ZOOM_STEP = 0.25;
@@ -685,8 +699,10 @@ async function beginGame({ withHands }) {
       );
       return;
     }
-  } else if (videoEl) {
-    videoEl.style.display = 'none';
+    controlMode = 'hands';
+  } else {
+    controlMode = 'manual';
+    if (videoEl) videoEl.style.display = 'none';
   }
   startScreen.classList.add('hidden');
   uiEl.classList.remove('hidden');
