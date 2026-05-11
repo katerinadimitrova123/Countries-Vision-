@@ -10,6 +10,7 @@ const countryNameEl = document.getElementById('country-name');
 const countryFlagEl = document.getElementById('country-flag');
 const countryCapitalEl = document.getElementById('country-capital');
 const countryPopulationEl = document.getElementById('country-population');
+const countryCurrencyEl = document.getElementById('country-currency');
 const scoreEl = document.getElementById('score-value');
 const statusEl = document.getElementById('status');
 const fillEl = document.getElementById('select-fill');
@@ -158,10 +159,20 @@ function formatPopulation(n) {
   return String(n);
 }
 
+function formatCurrency(currencies) {
+  if (!currencies || typeof currencies !== 'object') return '—';
+  const first = Object.values(currencies)[0];
+  if (!first) return '—';
+  const name = first.name ?? '';
+  const symbol = first.symbol ?? '';
+  if (name && symbol) return `${name} (${symbol})`;
+  return name || symbol || '—';
+}
+
 async function fetchCountryInfo(name) {
   if (countryInfoCache.has(name)) return countryInfoCache.get(name);
-  const base = `https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?fields=capital,population,flag`;
-  const empty = { capital: '—', population: null, flag: '' };
+  const base = `https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?fields=capital,population,flag,currencies`;
+  const empty = { capital: '—', population: null, flag: '', currency: '—' };
   async function tryFetch(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error('lookup failed');
@@ -180,6 +191,7 @@ async function fetchCountryInfo(name) {
       capital: match?.capital?.[0] ?? '—',
       population: match?.population ?? null,
       flag: match?.flag ?? '',
+      currency: formatCurrency(match?.currencies),
     };
     countryInfoCache.set(name, info);
     return info;
@@ -196,6 +208,7 @@ async function pickRandomCountry() {
   countryFlagEl.textContent = '';
   countryCapitalEl.textContent = '…';
   countryPopulationEl.textContent = '…';
+  countryCurrencyEl.textContent = '…';
   const pickedAt = targetCountry;
   const info = await fetchCountryInfo(targetCountry);
   if (pickedAt !== targetCountry) return;
@@ -203,6 +216,7 @@ async function pickRandomCountry() {
   countryCapitalEl.textContent = info.capital;
   countryPopulationEl.textContent =
     info.population != null ? formatPopulation(info.population) : '—';
+  countryCurrencyEl.textContent = info.currency;
 }
 
 let statusTimeout = null;
