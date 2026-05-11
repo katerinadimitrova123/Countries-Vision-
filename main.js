@@ -601,15 +601,21 @@ canvas.addEventListener(
   (e) => {
     if (!isManual()) return;
     e.preventDefault();
-    // Trackpad pinch arrives as wheel events with ctrlKey: true on macOS/Windows.
-    // Use a stronger sensitivity for pinch so it matches the gesture's feel.
-    const isPinch = e.ctrlKey;
-    const sensitivity = isPinch ? 0.012 : 0.003;
-    const delta = e.deltaY * sensitivity;
-    cameraTargetZ = Math.max(
-      ZOOM_NEAR,
-      Math.min(ZOOM_FAR, cameraTargetZ + delta)
-    );
+    if (e.ctrlKey) {
+      // Trackpad pinch arrives as a wheel event with ctrlKey: true → zoom.
+      const delta = e.deltaY * 0.012;
+      cameraTargetZ = Math.max(
+        ZOOM_NEAR,
+        Math.min(ZOOM_FAR, cameraTargetZ + delta)
+      );
+    } else {
+      // Two-finger trackpad drag (or mouse-wheel scroll) → rotate the globe.
+      // Inverted to match click-and-drag direction (sliding fingers right
+      // grabs the globe and pulls it right, just like dragging with a click).
+      const sensitivity = 0.0035;
+      rotVelY -= e.deltaX * sensitivity;
+      rotVelX -= e.deltaY * sensitivity;
+    }
   },
   { passive: false }
 );
