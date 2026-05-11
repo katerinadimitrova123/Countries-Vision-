@@ -45,7 +45,16 @@ body {
   z-index: 5;
 }
 
-#prompt-wrap { min-width: 0; }
+#prompt-wrap {
+  min-width: 0;
+  background: rgba(20, 26, 38, 0.7);
+  border: 1px solid #2a3140;
+  border-radius: 14px;
+  padding: 16px 20px;
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  max-width: 480px;
+}
 
 #home-btn {
   position: fixed;
@@ -502,6 +511,11 @@ body {
   }
   #prompt { font-size: 22px; }
   #prompt #country-flag { font-size: 26px; }
+  #prompt-wrap {
+    padding: 12px 14px;
+    border-radius: 12px;
+    max-width: calc(100% - 110px);
+  }
   #score-box {
     font-size: 16px;
     padding: 6px 12px;
