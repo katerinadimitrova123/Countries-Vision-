@@ -169,12 +169,111 @@ const MANUAL_COUNTRY_DATA = {
   },
 };
 
+// Field-level overrides applied after the API response (e.g. when REST
+// Countries is out of date). Keyed by ISO 3166-1 numeric code.
+const COUNTRY_PATCHES = {
+  '100': { currency: 'Euro (€)' }, // Bulgaria — adopted the Euro on 2026-01-01
+};
+
 function formatPopulation(n) {
   if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
   if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
   if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
   return String(n);
 }
+
+// ---------- All-countries browser ----------
+let allCountriesData = null;
+let allCountriesPromise = null;
+let countriesSearchQuery = '';
+
+async function loadAllCountries() {
+  if (allCountriesData) return allCountriesData;
+  if (allCountriesPromise) return allCountriesPromise;
+  allCountriesPromise = (async () => {
+    const res = await fetch(
+      'https://restcountries.com/v3.1/all?fields=name,flag,capital,population,currencies,ccn3'
+    );
+    if (!res.ok) throw new Error('countries load failed');
+    const data = await res.json();
+    allCountriesData = data
+      .map((c) => {
+        const entry = {
+          name: c.name?.common ?? '?',
+          flag: c.flag ?? '',
+          capital: c.capital?.[0] ?? '—',
+          population: c.population ?? 0,
+          currency: formatCurrency(c.currencies),
+        };
+        if (c.ccn3 && COUNTRY_PATCHES[c.ccn3]) {
+          Object.assign(entry, COUNTRY_PATCHES[c.ccn3]);
+        }
+        return entry;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return allCountriesData;
+  })();
+  return allCountriesPromise;
+}
+
+function renderCountriesList() {
+  const list = document.getElementById('countries-list');
+  if (!allCountriesData) {
+    list.innerHTML = '<li class="loading">Loading…</li>';
+    return;
+  }
+  const q = countriesSearchQuery.trim().toLowerCase();
+  const filtered = q
+    ? allCountriesData.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.capital.toLowerCase().includes(q)
+      )
+    : allCountriesData;
+  if (filtered.length === 0) {
+    list.innerHTML = '<li class="empty">No countries match.</li>';
+    return;
+  }
+  list.innerHTML = filtered
+    .map(
+      (c) => `
+      <li>
+        <span class="flag">${c.flag}</span>
+        <div class="info">
+          <span class="name">${c.name}</span>
+          <span class="meta"><span class="label">Capital:</span>${c.capital} · <span class="label">Pop:</span>${c.population ? formatPopulation(c.population) : '—'} · <span class="label">Currency:</span>${c.currency}</span>
+        </div>
+      </li>`
+    )
+    .join('');
+}
+
+async function openCountries() {
+  const panel = document.getElementById('countries-panel');
+  panel.classList.remove('hidden');
+  renderCountriesList();
+  try {
+    await loadAllCountries();
+    renderCountriesList();
+  } catch {
+    document.getElementById('countries-list').innerHTML =
+      '<li class="loading">Could not load countries.</li>';
+  }
+}
+
+function closeCountries() {
+  document.getElementById('countries-panel').classList.add('hidden');
+}
+
+document.getElementById('countries-btn').addEventListener('click', openCountries);
+document.getElementById('countries-close').addEventListener('click', closeCountries);
+document.getElementById('countries-panel').addEventListener('click', (e) => {
+  if (e.target.id === 'countries-panel') closeCountries();
+});
+document.getElementById('countries-search').addEventListener('input', (e) => {
+  countriesSearchQuery = e.target.value;
+  renderCountriesList();
+});
 
 function formatCurrency(currencies) {
   if (!currencies || typeof currencies !== 'object') return '—';
@@ -231,6 +330,7 @@ async function fetchCountryInfo(name, id) {
       flag: match?.flag ?? '',
       currency: formatCurrency(match?.currencies),
     };
+    if (id && COUNTRY_PATCHES[id]) Object.assign(info, COUNTRY_PATCHES[id]);
     countryInfoCache.set(cacheKey, info);
     return info;
   } catch {
