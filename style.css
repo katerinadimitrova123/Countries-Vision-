@@ -356,6 +356,8 @@ body.hands-mode #video { left: 16px; }
   padding: 40px;
   text-align: center;
   transition: opacity 0.4s;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 #start-screen.hidden {
   opacity: 0;
@@ -487,6 +489,10 @@ body.hands-mode #video { left: 16px; }
 
 /* ---------- Tablet ---------- */
 @media (max-width: 900px) {
+  #start-screen {
+    justify-content: flex-start;
+    padding: 28px 24px 40px;
+  }
   #ui { padding: 18px 22px; }
   #prompt { font-size: 26px; }
   #prompt #country-flag { font-size: 30px; }
@@ -571,10 +577,14 @@ body.hands-mode #video { left: 16px; }
   }
 
   /* Start screen */
-  #start-screen { padding: 24px 18px; gap: 12px; }
-  #start-screen h1 { font-size: 38px; }
+  #start-screen {
+    padding: 20px 16px 40px;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+  #start-screen h1 { font-size: 36px; }
   #start-screen p { font-size: 15px; }
-  .mode-heading { font-size: 17px; }
+  .mode-heading { font-size: 17px; margin-top: 6px; }
   .mode-grid { gap: 18px; margin-top: 8px; }
   #start-screen .instructions li { font-size: 14px; padding: 8px 12px; }
   #start-btn, #start-btn-nocam { padding: 12px 22px; font-size: 15px; }
