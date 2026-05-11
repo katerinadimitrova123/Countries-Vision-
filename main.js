@@ -152,6 +152,23 @@ function setRevealRotationTarget(mesh) {
 
 const countryInfoCache = new Map();
 
+// Hardcoded fallback for entities not recognized by REST Countries.
+// Keyed by the world-atlas dataset name.
+const MANUAL_COUNTRY_DATA = {
+  'N. Cyprus': {
+    capital: 'North Nicosia',
+    population: 383000,
+    flag: '',
+    currency: 'Turkish lira (₺)',
+  },
+  Somaliland: {
+    capital: 'Hargeisa',
+    population: 6200000,
+    flag: '',
+    currency: 'Somaliland shilling (Sh)',
+  },
+};
+
 function formatPopulation(n) {
   if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
   if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
@@ -169,9 +186,16 @@ function formatCurrency(currencies) {
   return name || symbol || '—';
 }
 
-async function fetchCountryInfo(name) {
-  if (countryInfoCache.has(name)) return countryInfoCache.get(name);
-  const base = `https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?fields=capital,population,flag,currencies`;
+async function fetchCountryInfo(name, id) {
+  const cacheKey = id ? `id:${id}` : `name:${name}`;
+  if (countryInfoCache.has(cacheKey)) return countryInfoCache.get(cacheKey);
+  // Manual overrides for non-ISO entities (Northern Cyprus, Somaliland, …)
+  if (MANUAL_COUNTRY_DATA[name]) {
+    const info = MANUAL_COUNTRY_DATA[name];
+    countryInfoCache.set(cacheKey, info);
+    return info;
+  }
+  const fields = 'fields=capital,population,flag,currencies';
   const empty = { capital: '—', population: null, flag: '', currency: '—' };
   async function tryFetch(url) {
     const res = await fetch(url);
@@ -179,12 +203,26 @@ async function fetchCountryInfo(name) {
     return res.json();
   }
   try {
-    // Exact-name match first to avoid Niger → Nigeria collisions
     let data;
-    try {
-      data = await tryFetch(base + '&fullText=true');
-    } catch {
-      data = await tryFetch(base);
+    // ISO numeric code lookup is the most reliable; falls back to name search.
+    if (id) {
+      try {
+        data = await tryFetch(
+          `https://restcountries.com/v3.1/alpha/${encodeURIComponent(id)}?${fields}`
+        );
+        // alpha endpoint returns a single object, not an array
+        if (!Array.isArray(data)) data = [data];
+      } catch {
+        // fall through to name-based lookup
+      }
+    }
+    if (!data) {
+      const base = `https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?${fields}`;
+      try {
+        data = await tryFetch(base + '&fullText=true');
+      } catch {
+        data = await tryFetch(base);
+      }
     }
     const match = data[0];
     const info = {
@@ -193,24 +231,26 @@ async function fetchCountryInfo(name) {
       flag: match?.flag ?? '',
       currency: formatCurrency(match?.currencies),
     };
-    countryInfoCache.set(name, info);
+    countryInfoCache.set(cacheKey, info);
     return info;
   } catch {
-    countryInfoCache.set(name, empty);
+    countryInfoCache.set(cacheKey, empty);
     return empty;
   }
 }
 
 async function pickRandomCountry() {
   const idx = Math.floor(Math.random() * countryMeshes.length);
-  targetCountry = countryMeshes[idx].userData.name;
+  const picked = countryMeshes[idx];
+  targetCountry = picked.userData.name;
+  const targetId = picked.userData.id;
   countryNameEl.textContent = targetCountry;
   countryFlagEl.textContent = '';
   countryCapitalEl.textContent = '…';
   countryPopulationEl.textContent = '…';
   countryCurrencyEl.textContent = '…';
   const pickedAt = targetCountry;
-  const info = await fetchCountryInfo(targetCountry);
+  const info = await fetchCountryInfo(targetCountry, targetId);
   if (pickedAt !== targetCountry) return;
   countryFlagEl.textContent = info.flag;
   countryCapitalEl.textContent = info.capital;
@@ -630,6 +670,7 @@ function animate() {
 // ---------- Start flow ----------
 async function beginGame({ withHands }) {
   startBtn.disabled = true;
+  const videoEl = document.getElementById('video');
   if (withHands) {
     startBtn.textContent = 'Starting camera...';
     try {
@@ -644,6 +685,8 @@ async function beginGame({ withHands }) {
       );
       return;
     }
+  } else if (videoEl) {
+    videoEl.style.display = 'none';
   }
   startScreen.classList.add('hidden');
   uiEl.classList.remove('hidden');

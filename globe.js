@@ -159,6 +159,7 @@ export async function buildGlobe(parent) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.renderOrder = 10;
     mesh.userData.name = name;
+    mesh.userData.id = feature.id; // ISO 3166-1 numeric code, e.g. "196" for Cyprus
     mesh.userData.baseColor = baseColor;
     countryMeshes.push(mesh);
     countriesGroup.add(mesh);
