@@ -548,7 +548,11 @@ canvas.addEventListener(
   'wheel',
   (e) => {
     e.preventDefault();
-    const delta = e.deltaY * 0.003;
+    // Trackpad pinch arrives as wheel events with ctrlKey: true on macOS/Windows.
+    // Use a stronger sensitivity for pinch so it matches the gesture's feel.
+    const isPinch = e.ctrlKey;
+    const sensitivity = isPinch ? 0.012 : 0.003;
+    const delta = e.deltaY * sensitivity;
     cameraTargetZ = Math.max(
       ZOOM_NEAR,
       Math.min(ZOOM_FAR, cameraTargetZ + delta)
