@@ -311,13 +311,16 @@ body {
     padding: 14px 16px;
     flex-direction: column;
     gap: 10px;
+    position: relative;
   }
   #prompt { font-size: 22px; }
   #prompt #country-flag { font-size: 26px; }
   #score-box {
     font-size: 16px;
     padding: 6px 12px;
-    align-self: flex-start;
+    position: absolute;
+    top: 14px;
+    right: 16px;
   }
   #country-info { font-size: 13px; }
   #video {
