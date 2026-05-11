@@ -19,7 +19,7 @@ body {
 #video {
   position: fixed;
   bottom: 16px;
-  left: 16px;
+  left: 80px;
   width: 220px;
   height: 165px;
   object-fit: cover;
@@ -40,8 +40,42 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 14px;
   pointer-events: none;
   z-index: 5;
+}
+
+#prompt-wrap { min-width: 0; }
+
+#home-btn {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(20, 26, 38, 0.75);
+  border: 1px solid #2a3140;
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+#home-btn:hover {
+  background: rgba(40, 50, 70, 0.9);
+  border-color: #5aa4ff;
+  transform: translateY(-2px);
+}
+#home-btn.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 #prompt {
@@ -452,7 +486,7 @@ body {
     width: 160px;
     height: 120px;
     bottom: 12px;
-    left: 12px;
+    left: 70px;
   }
   #status { font-size: 32px; top: 90px; }
   #select-progress { width: 240px; bottom: 32px; }
@@ -478,6 +512,11 @@ body {
   .ui-right {
     display: contents;
   }
+  #home-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
   #countries-btn {
     position: fixed;
     right: 14px;
@@ -497,8 +536,15 @@ body {
     width: 110px;
     height: 82px;
     bottom: 10px;
-    left: 10px;
+    left: 64px;
     border-width: 1px;
+  }
+  #home-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    left: 12px;
+    bottom: 12px;
   }
   #status { font-size: 24px; top: 78px; }
   #select-progress {

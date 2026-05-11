@@ -497,6 +497,10 @@ let currentGesture = 'none';
 let cursorPos = { x: 0.5, y: 0.5 };
 
 function onHand(handData) {
+  if (controlMode !== 'hands') {
+    cursorEl.classList.add('hidden');
+    return;
+  }
   updateZoomFromHands(handData);
 
   if (!handData) {
@@ -788,6 +792,43 @@ function animate() {
 }
 
 // ---------- Start flow ----------
+let animateStarted = false;
+let pushedHistoryState = false;
+
+function goHome() {
+  // Restore start screen, clear in-flight game state
+  uiEl.classList.add('hidden');
+  document.getElementById('home-btn').classList.add('hidden');
+  startScreen.classList.remove('hidden');
+  controlMode = 'manual'; // park between modes; real mode is set when user picks again
+  cursorEl.classList.add('hidden');
+
+  // Reset round state
+  if (revealMesh) {
+    revealMesh.material.color.setHex(revealMesh.userData.baseColor);
+    revealMesh.material.opacity = 0;
+    revealMesh = null;
+    revealRotateActive = false;
+  }
+  hideRedOverlay();
+  revealEndAt = 0;
+  fistHoldStart = null;
+  fillEl.style.width = '0%';
+  progressEl.classList.add('hidden');
+  score = 0;
+  scoreEl.textContent = '0';
+
+  // Reset start button so user can pick a mode again
+  startBtn.disabled = false;
+  startBtn.textContent = 'Start with hand tracking';
+}
+
+window.addEventListener('popstate', () => {
+  if (!startScreen.classList.contains('hidden')) return;
+  pushedHistoryState = false;
+  goHome();
+});
+
 async function beginGame({ withHands }) {
   startBtn.disabled = true;
   const videoEl = document.getElementById('video');
@@ -812,10 +853,27 @@ async function beginGame({ withHands }) {
   }
   startScreen.classList.add('hidden');
   uiEl.classList.remove('hidden');
+  document.getElementById('home-btn').classList.remove('hidden');
   pickRandomCountry();
   rotVelY = 0.01;
-  animate();
+  if (!animateStarted) {
+    animateStarted = true;
+    animate();
+  }
+  // Push a history entry so the device/browser back button returns to start
+  if (!pushedHistoryState) {
+    history.pushState({ inGame: true }, '');
+    pushedHistoryState = true;
+  }
 }
+
+document.getElementById('home-btn').addEventListener('click', () => {
+  if (pushedHistoryState) {
+    history.back(); // triggers popstate → goHome
+  } else {
+    goHome();
+  }
+});
 
 startBtn.addEventListener('click', () => beginGame({ withHands: true }));
 const startNoCamBtn = document.getElementById('start-btn-nocam');
