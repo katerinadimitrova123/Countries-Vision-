@@ -799,6 +799,7 @@ function goHome() {
   // Restore start screen, clear in-flight game state
   uiEl.classList.add('hidden');
   document.getElementById('home-btn').classList.add('hidden');
+  document.body.classList.remove('hands-mode');
   startScreen.classList.remove('hidden');
   controlMode = 'manual'; // park between modes; real mode is set when user picks again
   cursorEl.classList.add('hidden');
@@ -847,13 +848,19 @@ async function beginGame({ withHands }) {
       return;
     }
     controlMode = 'hands';
+    document.body.classList.add('hands-mode');
   } else {
     controlMode = 'manual';
+    document.body.classList.remove('hands-mode');
     if (videoEl) videoEl.style.display = 'none';
   }
   startScreen.classList.add('hidden');
   uiEl.classList.remove('hidden');
-  document.getElementById('home-btn').classList.remove('hidden');
+  if (controlMode === 'manual') {
+    document.getElementById('home-btn').classList.remove('hidden');
+  } else {
+    document.getElementById('home-btn').classList.add('hidden');
+  }
   pickRandomCountry();
   rotVelY = 0.01;
   if (!animateStarted) {

@@ -30,6 +30,7 @@ body {
   z-index: 10;
   background: #000;
 }
+body.hands-mode #video { left: 16px; }
 
 #ui {
   position: fixed;
@@ -497,6 +498,7 @@ body {
     bottom: 12px;
     left: 70px;
   }
+  body.hands-mode #video { left: 12px; }
   #status { font-size: 32px; top: 90px; }
   #select-progress { width: 240px; bottom: 32px; }
 }
@@ -553,6 +555,7 @@ body {
     left: 64px;
     border-width: 1px;
   }
+  body.hands-mode #video { left: 10px; }
   #home-btn {
     width: 42px;
     height: 42px;
