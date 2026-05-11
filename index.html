@@ -34,7 +34,13 @@
   </div>
 
   <div id="ui" class="hidden">
-    <div id="prompt">Find <span id="country-name">...</span></div>
+    <div id="prompt-wrap">
+      <div id="prompt">Find <span id="country-name">...</span></div>
+      <div id="country-info">
+        <div><span class="label">Capital:</span> <span id="country-capital">—</span></div>
+        <div><span class="label">Population:</span> <span id="country-population">—</span></div>
+      </div>
+    </div>
     <div id="score-box">Score: <span id="score-value">0</span></div>
   </div>
   <div id="status" class="hidden"></div>
@@ -44,6 +50,6 @@
   <div id="cursor" class="hidden"></div>
   <canvas id="globe"></canvas>
 
-  <script type="module" src="./main.js?v=5"></script>
+  <script type="module" src="./main.js?v=6"></script>
 </body>
 </html>

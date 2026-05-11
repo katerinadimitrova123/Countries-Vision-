@@ -7,6 +7,8 @@ const startScreen = document.getElementById('start-screen');
 const startBtn = document.getElementById('start-btn');
 const uiEl = document.getElementById('ui');
 const countryNameEl = document.getElementById('country-name');
+const countryCapitalEl = document.getElementById('country-capital');
+const countryPopulationEl = document.getElementById('country-population');
 const scoreEl = document.getElementById('score-value');
 const statusEl = document.getElementById('status');
 const fillEl = document.getElementById('select-fill');
@@ -146,10 +148,50 @@ function setRevealRotationTarget(mesh) {
   revealTargetRotY = cur + delta;
 }
 
-function pickRandomCountry() {
+const countryInfoCache = new Map();
+
+function formatPopulation(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+  return String(n);
+}
+
+async function fetchCountryInfo(name) {
+  if (countryInfoCache.has(name)) return countryInfoCache.get(name);
+  try {
+    const res = await fetch(
+      `https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?fields=capital,population`
+    );
+    if (!res.ok) throw new Error('lookup failed');
+    const data = await res.json();
+    const match = data[0];
+    const info = {
+      capital: match?.capital?.[0] ?? '—',
+      population: match?.population ?? null,
+    };
+    countryInfoCache.set(name, info);
+    return info;
+  } catch {
+    const info = { capital: '—', population: null };
+    countryInfoCache.set(name, info);
+    return info;
+  }
+}
+
+async function pickRandomCountry() {
   const idx = Math.floor(Math.random() * countryMeshes.length);
   targetCountry = countryMeshes[idx].userData.name;
   countryNameEl.textContent = targetCountry;
+  countryCapitalEl.textContent = '…';
+  countryPopulationEl.textContent = '…';
+  const pickedAt = targetCountry;
+  const info = await fetchCountryInfo(targetCountry);
+  // Ignore stale responses if the user moved on to another country
+  if (pickedAt !== targetCountry) return;
+  countryCapitalEl.textContent = info.capital;
+  countryPopulationEl.textContent =
+    info.population != null ? formatPopulation(info.population) : '—';
 }
 
 let statusTimeout = null;

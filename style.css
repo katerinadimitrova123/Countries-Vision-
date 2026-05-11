@@ -53,6 +53,19 @@ body {
   color: #5aa4ff;
 }
 
+#country-info {
+  margin-top: 10px;
+  font-size: 15px;
+  color: #c6cfdb;
+  line-height: 1.55;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+#country-info .label {
+  color: #8a95a8;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
 #score-box {
   font-size: 22px;
   font-weight: 600;
