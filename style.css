@@ -471,16 +471,21 @@ body {
   #score-box {
     font-size: 16px;
     padding: 6px 12px;
-  }
-  .ui-right {
     position: absolute;
     top: 14px;
     right: 16px;
-    gap: 6px;
+  }
+  .ui-right {
+    display: contents;
   }
   #countries-btn {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 11;
     font-size: 13px;
-    padding: 6px 10px;
+    padding: 8px 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
   }
   .countries-card { padding: 16px; max-height: 85vh; }
   .countries-header h2 { font-size: 18px; }
