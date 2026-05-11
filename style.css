@@ -242,21 +242,13 @@ body {
   letter-spacing: 0.01em;
   transition: transform 0.15s, box-shadow 0.15s;
 }
-#start-btn {
+#start-btn, #start-btn-nocam {
   background: linear-gradient(135deg, #5aa4ff, #3b82f6);
   box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
 }
-#start-btn:hover {
+#start-btn:hover, #start-btn-nocam:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 28px rgba(59, 130, 246, 0.5);
-}
-#start-btn-nocam {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-#start-btn-nocam:hover {
-  background: rgba(255, 255, 255, 0.14);
-  transform: translateY(-1px);
 }
 #start-btn:active, #start-btn-nocam:active { transform: translateY(0); }
 
