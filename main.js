@@ -252,7 +252,12 @@ function updateHover() {
   }
   raycaster.setFromCamera(cursorNDC, camera);
   const intersects = raycaster.intersectObjects(countryMeshes, false);
-  setHovered(intersects.length ? intersects[0].object : null);
+  // Country meshes use depthTest: false, so the ray can pass through the globe
+  // and hit a country on the far side. Only accept hits on the camera-facing
+  // hemisphere (hit point on the same side of the origin as the camera).
+  const camPos = camera.position;
+  const front = intersects.find((hit) => hit.point.dot(camPos) > 0);
+  setHovered(front ? front.object : null);
 }
 
 // ---------- Rotation ----------
