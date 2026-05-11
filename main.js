@@ -7,6 +7,7 @@ const startScreen = document.getElementById('start-screen');
 const startBtn = document.getElementById('start-btn');
 const uiEl = document.getElementById('ui');
 const countryNameEl = document.getElementById('country-name');
+const countryFlagEl = document.getElementById('country-flag');
 const countryCapitalEl = document.getElementById('country-capital');
 const countryPopulationEl = document.getElementById('country-population');
 const scoreEl = document.getElementById('score-value');
@@ -159,23 +160,32 @@ function formatPopulation(n) {
 
 async function fetchCountryInfo(name) {
   if (countryInfoCache.has(name)) return countryInfoCache.get(name);
-  try {
-    const res = await fetch(
-      `https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?fields=capital,population`
-    );
+  const base = `https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?fields=capital,population,flag`;
+  const empty = { capital: '—', population: null, flag: '' };
+  async function tryFetch(url) {
+    const res = await fetch(url);
     if (!res.ok) throw new Error('lookup failed');
-    const data = await res.json();
+    return res.json();
+  }
+  try {
+    // Exact-name match first to avoid Niger → Nigeria collisions
+    let data;
+    try {
+      data = await tryFetch(base + '&fullText=true');
+    } catch {
+      data = await tryFetch(base);
+    }
     const match = data[0];
     const info = {
       capital: match?.capital?.[0] ?? '—',
       population: match?.population ?? null,
+      flag: match?.flag ?? '',
     };
     countryInfoCache.set(name, info);
     return info;
   } catch {
-    const info = { capital: '—', population: null };
-    countryInfoCache.set(name, info);
-    return info;
+    countryInfoCache.set(name, empty);
+    return empty;
   }
 }
 
@@ -183,12 +193,13 @@ async function pickRandomCountry() {
   const idx = Math.floor(Math.random() * countryMeshes.length);
   targetCountry = countryMeshes[idx].userData.name;
   countryNameEl.textContent = targetCountry;
+  countryFlagEl.textContent = '';
   countryCapitalEl.textContent = '…';
   countryPopulationEl.textContent = '…';
   const pickedAt = targetCountry;
   const info = await fetchCountryInfo(targetCountry);
-  // Ignore stale responses if the user moved on to another country
   if (pickedAt !== targetCountry) return;
+  countryFlagEl.textContent = info.flag;
   countryCapitalEl.textContent = info.capital;
   countryPopulationEl.textContent =
     info.population != null ? formatPopulation(info.population) : '—';

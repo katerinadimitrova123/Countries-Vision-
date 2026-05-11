@@ -52,6 +52,11 @@ body {
 #prompt #country-name {
   color: #5aa4ff;
 }
+#prompt #country-flag {
+  font-size: 36px;
+  margin-left: 6px;
+  vertical-align: -3px;
+}
 
 #country-info {
   margin-top: 10px;
