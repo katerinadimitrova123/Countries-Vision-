@@ -446,14 +446,103 @@ window.addEventListener('mouseup', () => {
   lastMouseNorm = null;
 });
 
+let suppressNextClick = false;
+
 canvas.addEventListener('click', () => {
-  // Suppress click that follows a drag-rotate
-  if (mouseDragMoved) {
+  if (mouseDragMoved || suppressNextClick) {
     mouseDragMoved = false;
+    suppressNextClick = false;
     return;
   }
   if (hoveredMesh) commitSelection(hoveredMesh);
 });
+
+// ---------- Touch input (mobile / tablet) ----------
+let touchState = null; // { mode: 'drag'|'pinch', ... }
+const TAP_PX_THRESHOLD = 8;
+
+function touchToNorm(t) {
+  return { x: t.clientX / window.innerWidth, y: t.clientY / window.innerHeight };
+}
+
+canvas.addEventListener(
+  'touchstart',
+  (e) => {
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      const n = touchToNorm(t);
+      touchState = {
+        mode: 'drag',
+        last: n,
+        startPx: { x: t.clientX, y: t.clientY },
+        moved: false,
+      };
+      cursorNDC.x = n.x * 2 - 1;
+      cursorNDC.y = -(n.y * 2 - 1);
+    } else if (e.touches.length >= 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      touchState = { mode: 'pinch', lastDist: Math.hypot(dx, dy) };
+      suppressNextClick = true;
+    }
+  },
+  { passive: true }
+);
+
+canvas.addEventListener(
+  'touchmove',
+  (e) => {
+    if (!touchState) return;
+    e.preventDefault();
+    if (touchState.mode === 'drag' && e.touches.length === 1) {
+      const t = e.touches[0];
+      const n = touchToNorm(t);
+      const dx = n.x - touchState.last.x;
+      const dy = n.y - touchState.last.y;
+      rotVelY += dx * 5;
+      rotVelX += dy * 5;
+      touchState.last = n;
+      cursorNDC.x = n.x * 2 - 1;
+      cursorNDC.y = -(n.y * 2 - 1);
+
+      const movedPx = Math.hypot(
+        t.clientX - touchState.startPx.x,
+        t.clientY - touchState.startPx.y
+      );
+      if (movedPx > TAP_PX_THRESHOLD) {
+        touchState.moved = true;
+        suppressNextClick = true;
+      }
+    } else if (touchState.mode === 'pinch' && e.touches.length >= 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const delta = (touchState.lastDist - dist) * 0.005;
+      cameraTargetZ = Math.max(
+        ZOOM_NEAR,
+        Math.min(ZOOM_FAR, cameraTargetZ + delta)
+      );
+      touchState.lastDist = dist;
+    }
+  },
+  { passive: false }
+);
+
+canvas.addEventListener(
+  'touchend',
+  () => {
+    touchState = null;
+  },
+  { passive: true }
+);
+
+canvas.addEventListener(
+  'touchcancel',
+  () => {
+    touchState = null;
+  },
+  { passive: true }
+);
 
 canvas.addEventListener(
   'wheel',
