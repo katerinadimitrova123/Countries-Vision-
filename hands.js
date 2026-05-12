@@ -1,39 +1,51 @@
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
-function dist3(a, b) {
-  const dx = a.x - b.x, dy = a.y - b.y, dz = (a.z || 0) - (b.z || 0);
-  return Math.hypot(dx, dy, dz);
+function dist2(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function angleAt(joint, a, b) {
+  const v1x = a.x - joint.x, v1y = a.y - joint.y;
+  const v2x = b.x - joint.x, v2y = b.y - joint.y;
+  const dot = v1x * v2x + v1y * v2y;
+  const mag = Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y);
+  if (mag === 0) return Math.PI;
+  return Math.acos(Math.max(-1, Math.min(1, dot / mag)));
+}
+
+const CURL_THRESHOLD = 2.0; // ~115° — finger is curled if PIP angle < this
+function isCurled(lm, mcp, pip, tip) {
+  return angleAt(lm[pip], lm[mcp], lm[tip]) < CURL_THRESHOLD;
 }
 
 function detectGesture(lm) {
-  const wrist = lm[0];
-  const fingers = [
-    { tip: 8, pip: 6 },
-    { tip: 12, pip: 10 },
-    { tip: 16, pip: 14 },
-    { tip: 20, pip: 18 },
-  ];
-  let curled = 0;
-  let extended = 0;
-  for (const f of fingers) {
-    const tipDist = dist3(lm[f.tip], wrist);
-    const pipDist = dist3(lm[f.pip], wrist);
-    if (tipDist < pipDist * 1.05) curled++;
-    else extended++;
-  }
-  // Index extended, others curled = pointing
-  const indexExtended =
-    dist3(lm[8], wrist) > dist3(lm[6], wrist) * 1.1;
-  const middleCurled =
-    dist3(lm[12], wrist) < dist3(lm[10], wrist) * 1.05;
-  const ringCurled =
-    dist3(lm[16], wrist) < dist3(lm[14], wrist) * 1.05;
+  const indexCurled = isCurled(lm, 5, 6, 8);
+  const middleCurled = isCurled(lm, 9, 10, 12);
+  const ringCurled = isCurled(lm, 13, 14, 16);
+  const pinkyCurled = isCurled(lm, 17, 18, 20);
+  // Thumb: extended if tip is much farther from wrist than IP
+  const thumbExtended =
+    dist2(lm[4], lm[0]) > dist2(lm[3], lm[0]) * 1.15;
 
-  if (curled === 4) return 'fist';
-  if (indexExtended && middleCurled && ringCurled) return 'point';
-  if (extended >= 3) return 'open';
+  const downCount =
+    (indexCurled ? 1 : 0) + (middleCurled ? 1 : 0) +
+    (ringCurled ? 1 : 0) + (pinkyCurled ? 1 : 0);
+
+  // Victory ✌️ : index + middle extended, ring + pinky curled
+  if (!indexCurled && !middleCurled && ringCurled && pinkyCurled) {
+    return 'victory';
+  }
+  // ILoveYou 🤟 : thumb + index + pinky extended, middle + ring curled
+  if (thumbExtended && !indexCurled && middleCurled && ringCurled && !pinkyCurled) {
+    return 'love';
+  }
+  // Fist: all four fingers curled
+  if (downCount === 4) return 'fist';
+  // Open palm: 3+ extended
+  if (downCount <= 1) return 'open';
   return 'partial';
 }
+
 
 export async function setupHands(onHand) {
   const video = document.getElementById('video');
@@ -60,7 +72,7 @@ export async function setupHands(onHand) {
       delegate: 'GPU',
     },
     runningMode: 'VIDEO',
-    numHands: 2,
+    numHands: 1,
   });
 
   // Smoothing for cursor
@@ -89,30 +101,12 @@ export async function setupHands(onHand) {
 
         const gesture = detectGesture(lm);
 
-        // If two hands are visible, compute the distance between palm centers
-        // (in image-normalized coords) so main.js can detect a clap.
-        let twoHandsDist = null;
-        if (result.landmarks.length >= 2) {
-          const a = result.landmarks[0];
-          const b = result.landmarks[1];
-          // Average wrist + middle finger MCP for a more stable palm center
-          const palmA = {
-            x: (a[0].x + a[9].x) / 2,
-            y: (a[0].y + a[9].y) / 2,
-          };
-          const palmB = {
-            x: (b[0].x + b[9].x) / 2,
-            y: (b[0].y + b[9].y) / 2,
-          };
-          twoHandsDist = Math.hypot(palmA.x - palmB.x, palmA.y - palmB.y);
-        }
-
         onHand({
           x: smoothX,
           y: smoothY,
           gesture,
+          rawGesture: gesture,
           landmarks: lm,
-          twoHandsDist,
         });
       } else {
         onHand(null);

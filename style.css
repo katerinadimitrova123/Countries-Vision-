@@ -321,6 +321,10 @@ body.hands-mode #video { left: 16px; }
 #cursor[data-gesture="point"] {
   background: rgba(255,255,255,0.4);
 }
+#cursor[data-gesture="pinch"] {
+  background: rgba(250, 204, 21, 0.45);
+  border-color: #facc15;
+}
 
 #select-progress {
   position: fixed;
@@ -465,6 +469,24 @@ body.hands-mode #video { left: 16px; }
 #flash.fire {
   opacity: 0.85;
   transition: opacity 0.04s ease-out;
+}
+
+#hand-debug {
+  position: fixed;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  color: #facc15;
+  background: rgba(11, 14, 19, 0.85);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #2a3140;
+  z-index: 11;
+  pointer-events: none;
+  white-space: pre;
+  line-height: 1.5;
 }
 
 #clap-debug {

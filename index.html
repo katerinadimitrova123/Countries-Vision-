@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Countries Vision</title>
-  <link rel="stylesheet" href="./style.css?v=16" />
+  <link rel="stylesheet" href="./style.css?v=18" />
   <script type="importmap">
   {
     "imports": {
@@ -30,7 +30,7 @@
           <li><strong>Open palm</strong> &mdash; drag to rotate the globe</li>
           <li><strong>Point</strong> &mdash; cursor follows your index finger; the country turns blue</li>
           <li><strong>Make a fist</strong> &mdash; hold for 3 seconds to select</li>
-          <li><strong>Spread two hands</strong> &mdash; zoom in / out</li>
+          <li><strong>✌️ Peace sign</strong> &mdash; zoom in &nbsp;·&nbsp; <strong>🤟 Rock sign</strong> &mdash; zoom out</li>
         </ul>
         <button id="start-btn">Start with hand tracking</button>
       </div>
@@ -78,10 +78,11 @@
   <div id="status" class="hidden"></div>
   <div id="select-progress" class="hidden"><div id="select-fill"></div></div>
 
+  <div id="hand-debug" class="hidden"></div>
   <video id="video" autoplay playsinline muted></video>
   <div id="cursor" class="hidden"></div>
   <canvas id="globe"></canvas>
 
-  <script type="module" src="./main.js?v=24"></script>
+  <script type="module" src="./main.js?v=42"></script>
 </body>
 </html>

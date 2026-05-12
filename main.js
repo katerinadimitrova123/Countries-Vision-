@@ -108,12 +108,51 @@ function hideRedOverlay() {
   }
 }
 
-// Zoom state (two-hand spread controls camera distance)
-const ZOOM_NEAR = 1.8;     // closest camera position
-const ZOOM_FAR = 4.6;      // farthest camera position
-const HAND_DIST_NEAR = 0.10; // hands touching
-const HAND_DIST_FAR = 0.55;  // hands wide apart
+// Zoom state — Thumbs Up = zoom in, Thumbs Down = zoom out.
+// Continuous: as long as the gesture is shown, the camera moves at THUMB_ZOOM_SPEED.
+const ZOOM_NEAR = 1.8;        // closest camera position
+const ZOOM_FAR = 4.6;         // farthest camera position
+const THUMB_ZOOM_SPEED = 0.04; // units per frame
 let cameraTargetZ = camera.position.z;
+
+// Hysteresis state machine for hand-gesture mode.
+// Raw frame-by-frame gestures get mapped to a stable mode that only
+// changes after the new mode has been seen consistently for COMMIT_MS.
+const MODE_COMMIT_MS = 150;
+let activeMode = 'idle'; // 'idle' | 'pan' | 'zoom' | 'select'
+let pendingMode = 'idle';
+let pendingSince = 0;
+
+function gestureToMode(g) {
+  if (g === 'fist') return 'select';
+  if (g === 'open') return 'pan';
+  if (g === 'victory') return 'zoom_in';   // ✌️
+  if (g === 'love') return 'zoom_out';     // 🤟
+  return 'idle';
+}
+
+function updateMode(rawGesture) {
+  const candidate = gestureToMode(rawGesture);
+  const now = performance.now();
+  if (candidate === activeMode) {
+    pendingMode = candidate;
+    return activeMode;
+  }
+  if (candidate !== pendingMode) {
+    pendingMode = candidate;
+    pendingSince = now;
+    return activeMode;
+  }
+  // Select gets through immediately — fist-hold (3s) is its own delay.
+  if (candidate === 'select') {
+    activeMode = candidate;
+    return activeMode;
+  }
+  if (now - pendingSince >= MODE_COMMIT_MS) {
+    activeMode = candidate;
+  }
+  return activeMode;
+}
 
 function isLocked() {
   const now = performance.now();
@@ -481,15 +520,24 @@ function updateReveal() {
   }
 }
 
-function updateZoomFromHands(handData) {
-  if (!handData || handData.twoHandsDist == null) return;
-  const raw = Math.max(
-    HAND_DIST_NEAR,
-    Math.min(HAND_DIST_FAR, handData.twoHandsDist)
-  );
-  const t = (raw - HAND_DIST_NEAR) / (HAND_DIST_FAR - HAND_DIST_NEAR);
-  // Wider hands → t closer to 1 → camera closer (smaller z)
-  cameraTargetZ = ZOOM_FAR + t * (ZOOM_NEAR - ZOOM_FAR);
+function updateZoomFromHands(handData, mode) {
+  if (mode === 'zoom_in') {
+    cameraTargetZ = Math.max(ZOOM_NEAR, cameraTargetZ - THUMB_ZOOM_SPEED);
+  } else if (mode === 'zoom_out') {
+    cameraTargetZ = Math.min(ZOOM_FAR, cameraTargetZ + THUMB_ZOOM_SPEED);
+  }
+
+  // Debug HUD
+  const debugEl = document.getElementById('hand-debug');
+  if (debugEl && controlMode === 'hands') {
+    debugEl.classList.remove('hidden');
+    if (!handData) {
+      debugEl.textContent = 'mode: idle\n(no hand)';
+    } else {
+      debugEl.textContent =
+        `mode:   ${mode}\nraw:    ${handData.gesture}\ncamera: ${cameraTargetZ.toFixed(2)}`;
+    }
+  }
 }
 
 // ---------- Hand input ----------
@@ -501,7 +549,13 @@ function onHand(handData) {
     cursorEl.classList.add('hidden');
     return;
   }
-  updateZoomFromHands(handData);
+
+  // Run the gesture through the hysteresis state machine once per frame
+  const rawGesture = handData ? handData.gesture : null;
+  const mode = updateMode(rawGesture);
+
+  // Zoom always evaluates (uses mode internally to decide whether to act)
+  updateZoomFromHands(handData, mode);
 
   if (!handData) {
     currentGesture = 'none';
@@ -511,18 +565,23 @@ function onHand(handData) {
     return;
   }
   cursorEl.classList.remove('hidden');
-  currentGesture = handData.gesture;
+  currentGesture = handData.gesture; // raw — fist-hold selection wants this
   cursorPos.x = handData.x;
   cursorPos.y = handData.y;
   cursorEl.style.left = cursorPos.x * 100 + 'vw';
   cursorEl.style.top = cursorPos.y * 100 + 'vh';
-  cursorEl.dataset.gesture = handData.gesture;
+  // Cursor color reflects the committed mode
+  cursorEl.dataset.gesture =
+    mode === 'pan' ? 'open'
+    : mode === 'select' ? 'fist'
+    : mode === 'zoom_in' || mode === 'zoom_out' ? 'pinch'
+    : 'point';
 
   cursorNDC.x = cursorPos.x * 2 - 1;
   cursorNDC.y = -(cursorPos.y * 2 - 1);
 
-  // Rotation: open palm acts as a drag-rotate
-  if (handData.gesture === 'open') {
+  // Pan: only when hysteresis confirms 'pan' mode (open palm sustained)
+  if (mode === 'pan') {
     if (lastHandPos && dragMode) {
       const dx = handData.x - lastHandPos.x;
       const dy = handData.y - lastHandPos.y;
@@ -799,6 +858,8 @@ function goHome() {
   // Restore start screen, clear in-flight game state
   uiEl.classList.add('hidden');
   document.getElementById('home-btn').classList.add('hidden');
+  const debugEl = document.getElementById('hand-debug');
+  if (debugEl) debugEl.classList.add('hidden');
   document.body.classList.remove('hands-mode');
   startScreen.classList.remove('hidden');
   controlMode = 'manual'; // park between modes; real mode is set when user picks again
