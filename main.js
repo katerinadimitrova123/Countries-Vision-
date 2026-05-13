@@ -12,6 +12,10 @@ const countryCapitalEl = document.getElementById('country-capital');
 const countryPopulationEl = document.getElementById('country-population');
 const countryCurrencyEl = document.getElementById('country-currency');
 const scoreEl = document.getElementById('score-value');
+const livesEl = document.getElementById('lives-box');
+const gameOverEl = document.getElementById('game-over');
+const gameOverScoreEl = document.getElementById('gameover-score-value');
+const playAgainBtn = document.getElementById('play-again-btn');
 const statusEl = document.getElementById('status');
 const fillEl = document.getElementById('select-fill');
 const progressEl = document.getElementById('select-progress');
@@ -48,8 +52,51 @@ countryNameEl.textContent = 'Loading...';
 const { countryMeshes, ocean, lines } = await buildGlobe(globeGroup);
 
 // ---------- Game state ----------
+const MAX_LIVES = 3;
 let score = 0;
+let lives = MAX_LIVES;
+let gameIsOver = false;
 let targetCountry = null;
+
+function renderLives() {
+  if (!livesEl) return;
+  let html = '';
+  for (let i = 0; i < MAX_LIVES; i++) {
+    const lost = i >= lives;
+    html += `<span class="heart${lost ? ' lost' : ''}">${lost ? '🤍' : '❤️'}</span>`;
+  }
+  livesEl.innerHTML = html;
+}
+renderLives();
+
+function triggerGameOver() {
+  gameIsOver = true;
+  gameOverScoreEl.textContent = String(score);
+  gameOverEl.classList.remove('hidden');
+}
+
+function startNewGame() {
+  gameIsOver = false;
+  score = 0;
+  lives = MAX_LIVES;
+  scoreEl.textContent = '0';
+  renderLives();
+  gameOverEl.classList.add('hidden');
+  // Clear any in-flight reveal so the next round starts clean
+  if (revealMesh) {
+    revealMesh.material.color.setHex(revealMesh.userData.baseColor);
+    revealMesh.material.opacity = 0;
+    revealMesh = null;
+    revealRotateActive = false;
+  }
+  hideRedOverlay();
+  revealEndAt = 0;
+  pickRandomCountry();
+}
+
+if (playAgainBtn) {
+  playAgainBtn.addEventListener('click', startNewGame);
+}
 let hoveredMesh = null;
 let lastHoveredMesh = null;
 let fistHoldStart = null;
@@ -448,7 +495,7 @@ let dragMode = false;
 
 // ---------- Selection ----------
 function commitSelection(mesh) {
-  if (!mesh || isLocked()) return;
+  if (!mesh || isLocked() || gameIsOver) return;
   const picked = mesh.userData.name;
   if (picked === targetCountry) {
     score++;
@@ -465,9 +512,14 @@ function commitSelection(mesh) {
     }
     revealEndAt = performance.now() + REVEAL_MS;
   } else {
-    setStatus(`Wrong! That was ${targetCountry}`, '#f87171');
-    score = 0;
-    scoreEl.textContent = score;
+    lives = Math.max(0, lives - 1);
+    renderLives();
+    if (lives === 0) {
+      setStatus(`Wrong! That was ${targetCountry}`, '#f87171');
+    } else {
+      const remaining = lives === 1 ? '1 life left' : `${lives} lives left`;
+      setStatus(`Wrong! That was ${targetCountry} — ${remaining}`, '#f87171');
+    }
     setHovered(null);
     const target = countryMeshes.find(
       (m) => m.userData.name === targetCountry
@@ -516,7 +568,11 @@ function updateReveal() {
     hideRedOverlay();
     revealMesh = null;
     revealRotateActive = false;
-    pickRandomCountry();
+    if (lives === 0) {
+      triggerGameOver();
+    } else {
+      pickRandomCountry();
+    }
   }
 }
 
@@ -878,7 +934,11 @@ function goHome() {
   fillEl.style.width = '0%';
   progressEl.classList.add('hidden');
   score = 0;
+  lives = MAX_LIVES;
+  gameIsOver = false;
   scoreEl.textContent = '0';
+  renderLives();
+  gameOverEl.classList.add('hidden');
 
   // Reset start button so user can pick a mode again
   startBtn.disabled = false;
