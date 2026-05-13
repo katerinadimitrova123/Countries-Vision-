@@ -990,7 +990,7 @@ body.hands-mode #video { left: 16px; }
     left: 12px;
     bottom: 12px;
   }
-  #status { font-size: 24px; top: 78px; }
+  #status { font-size: 20px; top: 128px; }
   #select-progress {
     width: 200px;
     bottom: 24px;
