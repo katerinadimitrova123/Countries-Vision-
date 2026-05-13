@@ -178,6 +178,8 @@ body.hands-mode #video { left: 16px; }
   justify-content: center;
   z-index: 70;
   padding: 24px;
+  gap: 18px;
+  flex-wrap: wrap;
   transition: opacity 0.25s;
 }
 #game-over.hidden { opacity: 0; pointer-events: none; }
@@ -190,6 +192,94 @@ body.hands-mode #video { left: 16px; }
   padding: 32px 28px;
   text-align: center;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
+  flex: 0 0 auto;
+}
+
+.gameover-rankings-side {
+  width: min(340px, 100%);
+  background: #0f1320;
+  border: 1px solid #2a3140;
+  border-radius: 18px;
+  padding: 22px 20px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 80vh;
+  flex: 0 0 auto;
+  animation: rankings-slide-in 0.35s ease-out;
+}
+.gameover-rankings-side.hidden { display: none; }
+.gameover-rankings-side h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+  text-align: center;
+}
+#gameover-rankings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#gameover-rankings-list li {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(20, 26, 38, 0.5);
+  border-radius: 8px;
+  font-size: 14px;
+}
+#gameover-rankings-list li.me {
+  background: rgba(90, 164, 255, 0.18);
+  border: 1px solid rgba(90, 164, 255, 0.5);
+}
+#gameover-rankings-list li:nth-child(1) { background: rgba(251, 191, 36, 0.15); }
+#gameover-rankings-list li:nth-child(2) { background: rgba(192, 192, 192, 0.12); }
+#gameover-rankings-list li:nth-child(3) { background: rgba(205, 127, 50, 0.12); }
+#gameover-rankings-list li.me:nth-child(-n+3) {
+  background: rgba(90, 164, 255, 0.22);
+}
+#gameover-rankings-list .rank-pos {
+  font-weight: 700;
+  color: #8a95a8;
+  text-align: center;
+}
+#gameover-rankings-list li:nth-child(1) .rank-pos { color: #fbbf24; }
+#gameover-rankings-list li:nth-child(2) .rank-pos { color: #d1d5db; }
+#gameover-rankings-list li:nth-child(3) .rank-pos { color: #f97316; }
+#gameover-rankings-list .rank-name {
+  color: #fff;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#gameover-rankings-list .rank-score {
+  color: #4ade80;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes rankings-slide-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 800px) {
+  #game-over {
+    overflow-y: auto;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+  .gameover-rankings-side {
+    max-height: none;
+  }
 }
 .gameover-card h2 {
   font-size: 32px;

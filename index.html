@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Countries Vision</title>
-  <link rel="stylesheet" href="./style.css?v=29" />
+  <link rel="stylesheet" href="./style.css?v=30" />
   <script type="importmap">
   {
     "imports": {
@@ -92,6 +92,11 @@
         <button id="view-rankings-btn" class="secondary" type="button">🏆 Global rankings</button>
       </div>
     </div>
+    <aside id="gameover-rankings-side" class="gameover-rankings-side hidden" aria-label="Top rankings">
+      <h3>🏆 Top rankings</h3>
+      <ol id="gameover-rankings-list"></ol>
+      <p class="rankings-note">Top 10 scores worldwide</p>
+    </aside>
   </div>
 
   <div id="rankings-panel" class="hidden">
@@ -126,6 +131,6 @@
   <div id="cursor" class="hidden"></div>
   <canvas id="globe"></canvas>
 
-  <script type="module" src="./main.js?v=47"></script>
+  <script type="module" src="./main.js?v=48"></script>
 </body>
 </html>

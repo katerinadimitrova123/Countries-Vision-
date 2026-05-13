@@ -213,12 +213,15 @@ function setupSubmitUI(isNewBest, finalScore) {
   const submitBtn = document.getElementById('gameover-submit-btn');
   const statusLine = document.getElementById('gameover-submit-status');
   const rankEl = document.getElementById('gameover-rank');
+  const sidePanel = document.getElementById('gameover-rankings-side');
   if (!submitWrap || !nameInput || !submitBtn || !statusLine || !rankEl) return;
 
   rankEl.classList.add('hidden');
   rankEl.textContent = '';
   statusLine.textContent = '';
   submitBtn.disabled = false;
+  submitWrap.classList.remove('submitted');
+  if (sidePanel) sidePanel.classList.add('hidden');
 
   if (!isNewBest || finalScore <= 0 || !leaderboardAvailable()) {
     submitWrap.classList.add('hidden');
@@ -250,7 +253,10 @@ function setupSubmitUI(isNewBest, finalScore) {
       statusLine.textContent = 'Saved!';
       statusLine.className = 'gameover-submit-status success';
       submitWrap.classList.add('submitted');
-      const rank = await fetchRank(finalScore);
+      const [rank] = await Promise.all([
+        fetchRank(finalScore),
+        renderSideRankings(name, finalScore),
+      ]);
       if (rank) {
         rankEl.textContent = `You're ranked #${rank} worldwide`;
         rankEl.classList.remove('hidden');
@@ -261,6 +267,32 @@ function setupSubmitUI(isNewBest, finalScore) {
       statusLine.className = 'gameover-submit-status error';
     }
   };
+}
+
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+async function renderSideRankings(myName, myScore) {
+  const sidePanel = document.getElementById('gameover-rankings-side');
+  const listEl = document.getElementById('gameover-rankings-list');
+  if (!sidePanel || !listEl) return;
+  const rows = await fetchTop(10);
+  if (!rows.length) {
+    sidePanel.classList.add('hidden');
+    return;
+  }
+  listEl.innerHTML = rows.map((row, i) => {
+    const isMe = row.name === myName && row.score === myScore;
+    return `
+      <li class="${isMe ? 'me' : ''}">
+        <span class="rank-pos">${i + 1}</span>
+        <span class="rank-name">${escapeHtml(row.name)}</span>
+        <span class="rank-score">${row.score}</span>
+      </li>
+    `;
+  }).join('');
+  sidePanel.classList.remove('hidden');
 }
 
 async function showRankings() {
@@ -280,13 +312,10 @@ async function showRankings() {
     listEl.innerHTML = '<li class="rankings-loading">No scores yet. Be the first!</li>';
     return;
   }
-  const escape = (s) => String(s).replace(/[&<>"']/g, (c) => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
   listEl.innerHTML = rows.map((row, i) => `
     <li>
       <span class="rank-pos">${i + 1}</span>
-      <span class="rank-name">${escape(row.name)}</span>
+      <span class="rank-name">${escapeHtml(row.name)}</span>
       <span class="rank-score">${row.score}</span>
     </li>
   `).join('');
