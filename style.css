@@ -680,6 +680,8 @@ body.hands-mode #video { left: 16px; }
   text-shadow: 0 4px 20px rgba(0,0,0,0.8);
   z-index: 6;
   pointer-events: none;
+  white-space: pre-line;
+  text-align: center;
   transition: opacity 0.25s;
 }
 #status.hidden { opacity: 0; }
@@ -993,9 +995,14 @@ body.hands-mode #video { left: 16px; }
   #status {
     font-size: 24px;
     top: 178px;
-    max-width: 96vw;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
+    transform: none;
     text-align: center;
-    padding: 0 8px;
+    padding: 0 12px;
+    box-sizing: border-box;
   }
   #select-progress {
     width: 200px;

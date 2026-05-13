@@ -791,7 +791,7 @@ function commitSelection(mesh) {
       setStatus(`Wrong! That was ${targetCountry}`, '#ff3b3b');
     } else {
       const remaining = lives === 1 ? '1 life left' : `${lives} lives left`;
-      setStatus(`Wrong! That was ${targetCountry} — ${remaining}`, '#ff3b3b');
+      setStatus(`Wrong! That was ${targetCountry}\n${remaining}`, '#ff3b3b');
     }
     setHovered(null);
     const target = countryMeshes.find(
