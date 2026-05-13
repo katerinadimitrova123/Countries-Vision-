@@ -176,7 +176,6 @@ body.hands-mode #video { left: 16px; }
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   display: flex;
-  align-items: safe center;
   justify-content: center;
   overflow-y: auto;
   z-index: 70;
@@ -194,7 +193,7 @@ body.hands-mode #video { left: 16px; }
   text-align: center;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
   flex: 0 0 auto;
-  align-self: flex-start;
+  margin: auto;
 }
 
 .rankings-section {
@@ -304,9 +303,9 @@ body.hands-mode #video { left: 16px; }
 }
 
 @media (max-width: 560px) {
-  #game-over {
-    align-items: flex-start;
-    padding-top: 40px;
+  .gameover-card {
+    margin-top: 40px;
+    margin-bottom: 40px;
   }
 }
 .gameover-card h2 {
