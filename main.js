@@ -203,6 +203,7 @@ function triggerGameOver() {
   setupSubmitUI(isNewBest, score);
 
   gameOverEl.classList.remove('hidden');
+  document.getElementById('home-btn')?.classList.remove('hidden');
 
   if (isNewBest && score > 0) launchFireworks();
 }
@@ -348,6 +349,12 @@ function startNewGame() {
   scoreEl.textContent = '0';
   renderLives();
   gameOverEl.classList.add('hidden');
+  // Restore mode-appropriate home-button visibility (hidden in hands mode).
+  const homeBtn = document.getElementById('home-btn');
+  if (homeBtn) {
+    if (controlMode === 'hands') homeBtn.classList.add('hidden');
+    else homeBtn.classList.remove('hidden');
+  }
   // Clear any in-flight reveal so the next round starts clean
   if (revealMesh) {
     revealMesh.material.color.setHex(revealMesh.userData.baseColor);
@@ -849,17 +856,6 @@ function updateZoomFromHands(handData, mode) {
     cameraTargetZ = Math.min(ZOOM_FAR, cameraTargetZ + THUMB_ZOOM_SPEED);
   }
 
-  // Debug HUD
-  const debugEl = document.getElementById('hand-debug');
-  if (debugEl && controlMode === 'hands') {
-    debugEl.classList.remove('hidden');
-    if (!handData) {
-      debugEl.textContent = 'mode: idle\n(no hand)';
-    } else {
-      debugEl.textContent =
-        `mode:   ${mode}\nraw:    ${handData.gesture}\ncamera: ${cameraTargetZ.toFixed(2)}`;
-    }
-  }
 }
 
 // ---------- Hand input ----------
