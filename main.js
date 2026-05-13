@@ -536,6 +536,22 @@ const MANUAL_COUNTRY_DATA = {
 // Countries is out of date). Keyed by ISO 3166-1 numeric code.
 const COUNTRY_PATCHES = {
   '100': { currency: 'Euro (€)' }, // Bulgaria — adopted the Euro on 2026-01-01
+  // Uninhabited / no-government territories — REST Countries leaves these blank.
+  '010': { // Antarctica
+    capital: 'No official capital — McMurdo Station is the unofficial hub',
+    population: '~1,000 in winter, ~5,000 in summer (mostly researchers)',
+    currency: 'No official currency (USD / EUR commonly used)',
+  },
+  '074': { // Bouvet Island
+    capital: 'Uninhabited Norwegian dependency',
+    population: 'No permanent residents',
+    currency: 'Norwegian krone (NOK)',
+  },
+  '334': { // Heard Island and McDonald Islands
+    capital: 'Uninhabited Australian external territory',
+    population: 'No permanent residents',
+    currency: 'Australian dollar (AUD)',
+  },
 };
 
 function formatPopulation(n) {
