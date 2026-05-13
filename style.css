@@ -780,7 +780,17 @@ body.hands-mode #video { left: 16px; }
   border: 1px solid rgba(255,255,255,0.06);
 }
 #start-screen .instructions strong { color: #5aa4ff; }
-#start-screen .note { font-size: 13px; color: #6c7686; }
+#start-screen .mode-col { position: relative; }
+#start-screen .mode-col .note {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #cccccc;
+  text-align: center;
+}
 
 .mode-heading {
   font-size: 20px;
