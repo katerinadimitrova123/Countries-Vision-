@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Countries Vision</title>
-  <link rel="stylesheet" href="./style.css?v=28" />
+  <link rel="stylesheet" href="./style.css?v=29" />
   <script type="importmap">
   {
     "imports": {
@@ -78,7 +78,30 @@
         <span id="gameover-best-label">Personal best</span>
         <span id="gameover-best-value">0</span>
       </div>
-      <button id="play-again-btn">Play again</button>
+      <div id="gameover-submit" class="gameover-submit hidden">
+        <label for="gameover-name">Save to global rankings</label>
+        <div class="gameover-submit-row">
+          <input id="gameover-name" type="text" maxlength="24" placeholder="Your name" autocomplete="off" />
+          <button id="gameover-submit-btn" type="button">Submit</button>
+        </div>
+        <div id="gameover-submit-status" class="gameover-submit-status"></div>
+      </div>
+      <div id="gameover-rank" class="gameover-rank hidden"></div>
+      <div class="gameover-actions">
+        <button id="play-again-btn">Play again</button>
+        <button id="view-rankings-btn" class="secondary" type="button">🏆 Global rankings</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="rankings-panel" class="hidden">
+    <div class="rankings-card">
+      <div class="rankings-header">
+        <h2>🏆 Global Rankings</h2>
+        <button id="rankings-close" aria-label="Close">×</button>
+      </div>
+      <ol id="rankings-list"></ol>
+      <p class="rankings-note">Top 100 scores worldwide</p>
     </div>
   </div>
 
@@ -103,6 +126,6 @@
   <div id="cursor" class="hidden"></div>
   <canvas id="globe"></canvas>
 
-  <script type="module" src="./main.js?v=46"></script>
+  <script type="module" src="./main.js?v=47"></script>
 </body>
 </html>

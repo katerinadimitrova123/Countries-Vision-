@@ -286,6 +286,198 @@ body.hands-mode #video { left: 16px; }
   box-shadow: 0 12px 28px rgba(59, 130, 246, 0.5);
 }
 
+.gameover-submit {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(20, 26, 38, 0.55);
+  border: 1px solid #2a3140;
+  border-radius: 14px;
+  padding: 14px;
+}
+.gameover-submit.hidden { display: none; }
+.gameover-submit label {
+  font-size: 12px;
+  color: #8a95a8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.gameover-submit-row {
+  display: flex;
+  gap: 8px;
+}
+#gameover-name {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 15px;
+  color: #fff;
+  background: rgba(11, 14, 19, 0.7);
+  border: 1px solid #2a3140;
+  border-radius: 10px;
+  outline: none;
+}
+#gameover-name:focus { border-color: #5aa4ff; }
+#gameover-submit-btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #5aa4ff, #3b82f6);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#gameover-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.gameover-submit.submitted #gameover-submit-btn { display: none; }
+.gameover-submit.submitted #gameover-name { opacity: 0.6; }
+.gameover-submit-status {
+  font-size: 13px;
+  color: #8a95a8;
+  min-height: 16px;
+}
+.gameover-submit-status.success { color: #4ade80; }
+.gameover-submit-status.error { color: #f87171; }
+
+.gameover-rank {
+  width: 100%;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fbbf24;
+  padding: 10px 14px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 10px;
+}
+.gameover-rank.hidden { display: none; }
+
+.gameover-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+#view-rankings-btn {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(20, 26, 38, 0.7);
+  border: 1px solid #2a3140;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#view-rankings-btn:hover {
+  background: rgba(30, 38, 54, 0.9);
+}
+
+#rankings-panel {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 60;
+  padding: 20px;
+}
+#rankings-panel.hidden { display: none; }
+.rankings-card {
+  background: #0f1320;
+  border: 1px solid #2a3140;
+  border-radius: 18px;
+  padding: 24px;
+  width: min(440px, 100%);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.rankings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rankings-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #fff;
+}
+#rankings-close {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: #8a95a8;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 6px;
+}
+#rankings-close:hover { color: #fff; }
+#rankings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#rankings-list li {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(20, 26, 38, 0.5);
+  border-radius: 10px;
+}
+#rankings-list li:nth-child(1) { background: rgba(251, 191, 36, 0.15); }
+#rankings-list li:nth-child(2) { background: rgba(192, 192, 192, 0.12); }
+#rankings-list li:nth-child(3) { background: rgba(205, 127, 50, 0.12); }
+.rank-pos {
+  font-size: 16px;
+  font-weight: 700;
+  color: #8a95a8;
+  text-align: center;
+}
+#rankings-list li:nth-child(1) .rank-pos { color: #fbbf24; }
+#rankings-list li:nth-child(2) .rank-pos { color: #d1d5db; }
+#rankings-list li:nth-child(3) .rank-pos { color: #f97316; }
+.rank-name {
+  color: #fff;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-score {
+  color: #4ade80;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.rankings-loading {
+  text-align: center;
+  color: #8a95a8;
+  padding: 24px 0;
+  background: transparent !important;
+}
+.rankings-note {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
 #countries-btn {
   display: flex;
   align-items: center;

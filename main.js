@@ -1,6 +1,13 @@
 import * as THREE from 'three';
 import { buildGlobe, RADIUS } from './globe.js';
 import { setupHands } from './hands.js';
+import {
+  submitScore,
+  fetchRank,
+  fetchTop,
+  getStoredName,
+  leaderboardAvailable,
+} from './leaderboard.js';
 
 const canvas = document.getElementById('globe');
 const startScreen = document.getElementById('start-screen');
@@ -193,9 +200,106 @@ function triggerGameOver() {
     }
   }
 
+  setupSubmitUI(isNewBest, score);
+
   gameOverEl.classList.remove('hidden');
 
   if (isNewBest && score > 0) launchFireworks();
+}
+
+function setupSubmitUI(isNewBest, finalScore) {
+  const submitWrap = document.getElementById('gameover-submit');
+  const nameInput = document.getElementById('gameover-name');
+  const submitBtn = document.getElementById('gameover-submit-btn');
+  const statusLine = document.getElementById('gameover-submit-status');
+  const rankEl = document.getElementById('gameover-rank');
+  if (!submitWrap || !nameInput || !submitBtn || !statusLine || !rankEl) return;
+
+  rankEl.classList.add('hidden');
+  rankEl.textContent = '';
+  statusLine.textContent = '';
+  submitBtn.disabled = false;
+
+  if (!isNewBest || finalScore <= 0 || !leaderboardAvailable()) {
+    submitWrap.classList.add('hidden');
+    return;
+  }
+
+  submitWrap.classList.remove('hidden');
+  const stored = getStoredName();
+  nameInput.value = stored;
+  if (stored) {
+    submitBtn.textContent = 'Update ranking';
+  } else {
+    submitBtn.textContent = 'Submit';
+  }
+
+  submitBtn.onclick = async () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      statusLine.textContent = 'Please enter a name.';
+      statusLine.className = 'gameover-submit-status error';
+      return;
+    }
+    submitBtn.disabled = true;
+    statusLine.textContent = 'Submitting…';
+    statusLine.className = 'gameover-submit-status';
+
+    const result = await submitScore(name, finalScore);
+    if (result.ok) {
+      statusLine.textContent = 'Saved!';
+      statusLine.className = 'gameover-submit-status success';
+      submitWrap.classList.add('submitted');
+      const rank = await fetchRank(finalScore);
+      if (rank) {
+        rankEl.textContent = `You're ranked #${rank} worldwide`;
+        rankEl.classList.remove('hidden');
+      }
+    } else {
+      submitBtn.disabled = false;
+      statusLine.textContent = "Couldn't save score. Try again?";
+      statusLine.className = 'gameover-submit-status error';
+    }
+  };
+}
+
+async function showRankings() {
+  const panel = document.getElementById('rankings-panel');
+  const listEl = document.getElementById('rankings-list');
+  if (!panel || !listEl) return;
+  listEl.innerHTML = '<li class="rankings-loading">Loading…</li>';
+  panel.classList.remove('hidden');
+
+  if (!leaderboardAvailable()) {
+    listEl.innerHTML = '<li class="rankings-loading">Rankings unavailable.</li>';
+    return;
+  }
+
+  const rows = await fetchTop(100);
+  if (!rows.length) {
+    listEl.innerHTML = '<li class="rankings-loading">No scores yet. Be the first!</li>';
+    return;
+  }
+  const escape = (s) => String(s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+  listEl.innerHTML = rows.map((row, i) => `
+    <li>
+      <span class="rank-pos">${i + 1}</span>
+      <span class="rank-name">${escape(row.name)}</span>
+      <span class="rank-score">${row.score}</span>
+    </li>
+  `).join('');
+}
+
+const viewRankingsBtn = document.getElementById('view-rankings-btn');
+if (viewRankingsBtn) viewRankingsBtn.addEventListener('click', showRankings);
+
+const rankingsCloseBtn = document.getElementById('rankings-close');
+if (rankingsCloseBtn) {
+  rankingsCloseBtn.addEventListener('click', () => {
+    document.getElementById('rankings-panel')?.classList.add('hidden');
+  });
 }
 
 function startNewGame() {
