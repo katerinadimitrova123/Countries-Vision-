@@ -172,14 +172,15 @@ body.hands-mode #video { left: 16px; }
 #game-over {
   position: fixed;
   inset: 0;
-  background: transparent;
-  pointer-events: none;
+  background: rgba(5, 8, 14, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 70;
   padding: 24px;
-  transition: opacity 0.25s;
+  transition: opacity 0.25s, background 0.25s;
 }
 #game-over .gameover-row {
   display: flex;
@@ -188,9 +189,7 @@ body.hands-mode #video { left: 16px; }
   gap: 18px;
   flex-wrap: wrap;
   max-height: calc(100vh - 48px);
-  pointer-events: none;
 }
-#game-over .gameover-row > * { pointer-events: auto; }
 #game-over.hidden { opacity: 0; pointer-events: none; }
 
 .gameover-card {
@@ -202,8 +201,7 @@ body.hands-mode #video { left: 16px; }
   text-align: center;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
   flex: 0 0 auto;
-  max-height: 100%;
-  overflow-y: auto;
+  align-self: flex-start;
 }
 
 .gameover-rankings-side {
