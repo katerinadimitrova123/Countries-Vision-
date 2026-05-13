@@ -19,7 +19,7 @@ body {
 #video {
   position: fixed;
   bottom: 16px;
-  left: 80px;
+  left: 95px;
   width: 220px;
   height: 165px;
   object-fit: cover;
@@ -61,14 +61,14 @@ body.hands-mode #video { left: 16px; }
   position: fixed;
   left: 16px;
   bottom: 16px;
-  width: 46px;
-  height: 46px;
+  width: 61px;
+  height: 61px;
   border-radius: 50%;
   background: rgba(20, 26, 38, 0.75);
   border: 1px solid #2a3140;
   backdrop-filter: blur(8px);
   color: #fff;
-  font-size: 22px;
+  font-size: 30px;
   line-height: 1;
   cursor: pointer;
   z-index: 12;
@@ -642,7 +642,7 @@ body.hands-mode #video { left: 16px; }
     width: 160px;
     height: 120px;
     bottom: 12px;
-    left: 70px;
+    left: 85px;
   }
   body.hands-mode #video { left: 12px; }
   #status { font-size: 32px; top: 90px; }
@@ -683,9 +683,9 @@ body.hands-mode #video { left: 16px; }
     align-items: stretch;
   }
   #home-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
+    width: 51px;
+    height: 51px;
+    font-size: 26px;
   }
   #countries-btn {
     position: fixed;
@@ -706,7 +706,7 @@ body.hands-mode #video { left: 16px; }
     width: 110px;
     height: 82px;
     bottom: 10px;
-    left: 64px;
+    left: 75px;
     border-width: 1px;
   }
   body.hands-mode #video { left: 10px; }
@@ -752,6 +752,16 @@ body.hands-mode #video { left: 16px; }
   #lives-box { font-size: 26px; padding: 12px 22px; }
   #countries-btn { font-size: 26px; padding: 12px 22px; }
   .ui-right { gap: 14px; }
+
+  /* Bigger home button on desktop, aligned with the info card at the top */
+  #home-btn {
+    width: 81px;
+    height: 81px;
+    font-size: 38px;
+    left: 36px;
+    bottom: 28px;
+  }
+  #video { left: 130px; }
 
   /* Countries list panel — bigger card + bigger rows on desktop */
   .countries-card {
