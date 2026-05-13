@@ -214,7 +214,6 @@ function setupSubmitUI(isNewBest, finalScore) {
   const submitBtn = document.getElementById('gameover-submit-btn');
   const statusLine = document.getElementById('gameover-submit-status');
   const rankEl = document.getElementById('gameover-rank');
-  const sidePanel = document.getElementById('gameover-rankings-side');
   if (!submitWrap || !nameInput || !submitBtn || !statusLine || !rankEl) return;
 
   rankEl.classList.add('hidden');
@@ -222,7 +221,7 @@ function setupSubmitUI(isNewBest, finalScore) {
   statusLine.textContent = '';
   submitBtn.disabled = false;
   submitWrap.classList.remove('submitted');
-  if (sidePanel) sidePanel.classList.add('hidden');
+  collapseRankings();
 
   if (!isNewBest || finalScore <= 0 || !leaderboardAvailable()) {
     submitWrap.classList.add('hidden');
@@ -262,7 +261,7 @@ function setupSubmitUI(isNewBest, finalScore) {
       submitWrap.classList.add('submitted');
       const [rank] = await Promise.all([
         fetchRank(finalScore),
-        renderSideRankings({ myName: name, myScore: finalScore, limit: 10 }),
+        renderRankings({ myName: name, myScore: finalScore, limit: 10 }),
       ]);
       if (rank) {
         rankEl.textContent = `You're ranked #${rank} worldwide`;
@@ -281,7 +280,7 @@ async function finalizeSubmission(name, finalScore, { rankEl }) {
   if (!result.ok) return;
   const [rank] = await Promise.all([
     fetchRank(finalScore),
-    renderSideRankings({ myName: name, myScore: finalScore, limit: 10 }),
+    renderRankings({ myName: name, myScore: finalScore, limit: 10 }),
   ]);
   if (rank && rankEl) {
     rankEl.textContent = `Saved as ${name} · ranked #${rank} worldwide`;
@@ -293,14 +292,21 @@ const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
 
-async function renderSideRankings({ myName = null, myScore = null, limit = 10 } = {}) {
-  const sidePanel = document.getElementById('gameover-rankings-side');
+function expandRankings() {
+  document.getElementById('rankings-section')?.classList.add('expanded');
+}
+
+function collapseRankings() {
+  document.getElementById('rankings-section')?.classList.remove('expanded');
+}
+
+async function renderRankings({ myName = null, myScore = null, limit = 10 } = {}) {
   const listEl = document.getElementById('gameover-rankings-list');
   const noteEl = document.getElementById('gameover-rankings-note');
-  if (!sidePanel || !listEl) return;
+  if (!listEl) return;
 
+  expandRankings();
   listEl.innerHTML = '<li class="rankings-loading">Loading…</li>';
-  sidePanel.classList.remove('hidden');
 
   if (!leaderboardAvailable()) {
     listEl.innerHTML = '<li class="rankings-loading">Rankings unavailable.</li>';
@@ -331,15 +337,13 @@ const viewRankingsBtn = document.getElementById('view-rankings-btn');
 if (viewRankingsBtn) {
   viewRankingsBtn.addEventListener('click', () => {
     const storedName = getStoredName();
-    renderSideRankings({ myName: storedName || null, myScore: getBestScore(), limit: 100 });
+    renderRankings({ myName: storedName || null, myScore: getBestScore(), limit: 100 });
   });
 }
 
-const sideCloseBtn = document.getElementById('gameover-rankings-close');
-if (sideCloseBtn) {
-  sideCloseBtn.addEventListener('click', () => {
-    document.getElementById('gameover-rankings-side')?.classList.add('hidden');
-  });
+const rankingsCloseBtn = document.getElementById('gameover-rankings-close');
+if (rankingsCloseBtn) {
+  rankingsCloseBtn.addEventListener('click', collapseRankings);
 }
 
 function startNewGame() {
