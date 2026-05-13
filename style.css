@@ -119,8 +119,15 @@ body.hands-mode #video { left: 16px; }
 .ui-right {
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: flex-start;
   pointer-events: auto;
+}
+
+.score-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
 }
 
 #score-box {
@@ -650,19 +657,19 @@ body.hands-mode #video { left: 16px; }
   #score-box {
     font-size: 16px;
     padding: 6px 12px;
-    position: absolute;
-    top: 14px;
-    right: 16px;
   }
   #lives-box {
     font-size: 16px;
     padding: 4px 10px;
-    position: absolute;
-    top: 52px;
-    right: 16px;
   }
   .ui-right {
-    display: contents;
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    gap: 8px;
+  }
+  .score-stack {
+    gap: 6px;
   }
   #home-btn {
     width: 36px;
