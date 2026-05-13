@@ -788,10 +788,10 @@ function commitSelection(mesh) {
     lives = Math.max(0, lives - 1);
     renderLives();
     if (lives === 0) {
-      setStatus(`Wrong! That was ${targetCountry}`, '#f87171');
+      setStatus(`Wrong! That was ${targetCountry}`, '#ff3b3b');
     } else {
       const remaining = lives === 1 ? '1 life left' : `${lives} lives left`;
-      setStatus(`Wrong! That was ${targetCountry} — ${remaining}`, '#f87171');
+      setStatus(`Wrong! That was ${targetCountry} — ${remaining}`, '#ff3b3b');
     }
     setHovered(null);
     const target = countryMeshes.find(
