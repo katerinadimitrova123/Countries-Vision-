@@ -255,7 +255,7 @@ function setupSubmitUI(isNewBest, finalScore) {
       submitWrap.classList.add('submitted');
       const [rank] = await Promise.all([
         fetchRank(finalScore),
-        renderSideRankings(name, finalScore),
+        renderSideRankings({ myName: name, myScore: finalScore, limit: 10 }),
       ]);
       if (rank) {
         rankEl.textContent = `You're ranked #${rank} worldwide`;
@@ -273,17 +273,29 @@ const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
 
-async function renderSideRankings(myName, myScore) {
+async function renderSideRankings({ myName = null, myScore = null, limit = 10 } = {}) {
   const sidePanel = document.getElementById('gameover-rankings-side');
   const listEl = document.getElementById('gameover-rankings-list');
+  const noteEl = document.getElementById('gameover-rankings-note');
   if (!sidePanel || !listEl) return;
-  const rows = await fetchTop(10);
-  if (!rows.length) {
-    sidePanel.classList.add('hidden');
+
+  listEl.innerHTML = '<li class="rankings-loading">Loading…</li>';
+  sidePanel.classList.remove('hidden');
+
+  if (!leaderboardAvailable()) {
+    listEl.innerHTML = '<li class="rankings-loading">Rankings unavailable.</li>';
     return;
   }
+
+  const rows = await fetchTop(limit);
+  if (!rows.length) {
+    listEl.innerHTML = '<li class="rankings-loading">No scores yet. Be the first!</li>';
+    if (noteEl) noteEl.textContent = '';
+    return;
+  }
+
   listEl.innerHTML = rows.map((row, i) => {
-    const isMe = row.name === myName && row.score === myScore;
+    const isMe = myName !== null && row.name === myName && row.score === myScore;
     return `
       <li class="${isMe ? 'me' : ''}">
         <span class="rank-pos">${i + 1}</span>
@@ -292,42 +304,21 @@ async function renderSideRankings(myName, myScore) {
       </li>
     `;
   }).join('');
-  sidePanel.classList.remove('hidden');
-}
-
-async function showRankings() {
-  const panel = document.getElementById('rankings-panel');
-  const listEl = document.getElementById('rankings-list');
-  if (!panel || !listEl) return;
-  listEl.innerHTML = '<li class="rankings-loading">Loading…</li>';
-  panel.classList.remove('hidden');
-
-  if (!leaderboardAvailable()) {
-    listEl.innerHTML = '<li class="rankings-loading">Rankings unavailable.</li>';
-    return;
-  }
-
-  const rows = await fetchTop(100);
-  if (!rows.length) {
-    listEl.innerHTML = '<li class="rankings-loading">No scores yet. Be the first!</li>';
-    return;
-  }
-  listEl.innerHTML = rows.map((row, i) => `
-    <li>
-      <span class="rank-pos">${i + 1}</span>
-      <span class="rank-name">${escapeHtml(row.name)}</span>
-      <span class="rank-score">${row.score}</span>
-    </li>
-  `).join('');
+  if (noteEl) noteEl.textContent = `Top ${rows.length} scores worldwide`;
 }
 
 const viewRankingsBtn = document.getElementById('view-rankings-btn');
-if (viewRankingsBtn) viewRankingsBtn.addEventListener('click', showRankings);
+if (viewRankingsBtn) {
+  viewRankingsBtn.addEventListener('click', () => {
+    const storedName = getStoredName();
+    renderSideRankings({ myName: storedName || null, myScore: getBestScore(), limit: 100 });
+  });
+}
 
-const rankingsCloseBtn = document.getElementById('rankings-close');
-if (rankingsCloseBtn) {
-  rankingsCloseBtn.addEventListener('click', () => {
-    document.getElementById('rankings-panel')?.classList.add('hidden');
+const sideCloseBtn = document.getElementById('gameover-rankings-close');
+if (sideCloseBtn) {
+  sideCloseBtn.addEventListener('click', () => {
+    document.getElementById('gameover-rankings-side')?.classList.add('hidden');
   });
 }
 
