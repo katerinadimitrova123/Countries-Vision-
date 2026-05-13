@@ -83,6 +83,84 @@ function renderLives() {
 }
 renderLives();
 
+function launchFireworks(durationMs = 2200) {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText =
+    'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:71;';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const colors = ['#fbbf24', '#ef4444', '#5aa4ff', '#4ade80', '#a855f7', '#f97316', '#ec4899'];
+  const particles = [];
+
+  function spawnBurst(x, y) {
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const count = 50 + Math.floor(Math.random() * 20);
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.15;
+      const speed = 3 + Math.random() * 4;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        color,
+        size: 2 + Math.random() * 2,
+      });
+    }
+  }
+
+  const startTime = performance.now();
+  let burstsLaunched = 0;
+  const totalBursts = 6;
+  let nextBurstAt = 0;
+
+  function frame() {
+    const elapsed = performance.now() - startTime;
+
+    if (burstsLaunched < totalBursts && elapsed >= nextBurstAt) {
+      const x = canvas.width * (0.15 + Math.random() * 0.7);
+      const y = canvas.height * (0.15 + Math.random() * 0.45);
+      spawnBurst(x, y);
+      burstsLaunched++;
+      nextBurstAt = elapsed + 200 + Math.random() * 220;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'lighter';
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.08; // gravity
+      p.vx *= 0.99;
+      p.vy *= 0.99;
+      p.life -= 0.016;
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+        continue;
+      }
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (elapsed < durationMs || particles.length > 0) {
+      requestAnimationFrame(frame);
+    } else {
+      canvas.remove();
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+
 function triggerGameOver() {
   gameIsOver = true;
   const previousBest = getBestScore();
@@ -116,6 +194,8 @@ function triggerGameOver() {
   }
 
   gameOverEl.classList.remove('hidden');
+
+  if (isNewBest && score > 0) launchFireworks();
 }
 
 function startNewGame() {
