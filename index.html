@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Countries Vision</title>
-  <link rel="stylesheet" href="./style.css?v=32" />
+  <link rel="stylesheet" href="./style.css?v=34" />
   <script type="importmap">
   {
     "imports": {
@@ -66,6 +66,7 @@
   </div>
 
   <div id="game-over" class="hidden">
+    <div class="gameover-row">
     <div class="gameover-card">
       <h2>Game Over</h2>
       <p>Out of lives!</p>
@@ -86,7 +87,6 @@
         </div>
         <div id="gameover-submit-status" class="gameover-submit-status"></div>
       </div>
-      <div id="gameover-rank" class="gameover-rank hidden"></div>
       <div class="gameover-actions">
         <button id="play-again-btn">Play again</button>
         <button id="view-rankings-btn" class="secondary" type="button">🏆 World rankings</button>
@@ -97,9 +97,11 @@
         <h3>🏆 World rankings</h3>
         <button id="gameover-rankings-close" type="button" aria-label="Close">×</button>
       </div>
+      <div id="gameover-rank" class="gameover-rank hidden"></div>
       <ol id="gameover-rankings-list"></ol>
       <p id="gameover-rankings-note" class="rankings-note">Top 10 scores worldwide</p>
     </aside>
+    </div>
   </div>
 
   <button id="home-btn" class="hidden" aria-label="Back to start" title="Back to start">🏠</button>
@@ -123,6 +125,6 @@
   <div id="cursor" class="hidden"></div>
   <canvas id="globe"></canvas>
 
-  <script type="module" src="./main.js?v=50"></script>
+  <script type="module" src="./main.js?v=51"></script>
 </body>
 </html>

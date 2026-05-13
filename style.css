@@ -179,11 +179,18 @@ body.hands-mode #video { left: 16px; }
   justify-content: center;
   z-index: 70;
   padding: 24px;
-  gap: 18px;
-  flex-wrap: wrap;
   transition: opacity 0.25s;
 }
-#game-over > * { pointer-events: auto; }
+#game-over .gameover-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  max-height: calc(100vh - 48px);
+  pointer-events: none;
+}
+#game-over .gameover-row > * { pointer-events: auto; }
 #game-over.hidden { opacity: 0; pointer-events: none; }
 
 .gameover-card {
@@ -195,6 +202,8 @@ body.hands-mode #video { left: 16px; }
   text-align: center;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
   flex: 0 0 auto;
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 .gameover-rankings-side {
@@ -207,8 +216,8 @@ body.hands-mode #video { left: 16px; }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 80vh;
   flex: 0 0 auto;
+  min-height: 0;
   animation: rankings-slide-in 0.35s ease-out;
 }
 .gameover-rankings-side.hidden { display: none; }
@@ -235,12 +244,24 @@ body.hands-mode #video { left: 16px; }
 #gameover-rankings-close:hover { color: #fff; }
 #gameover-rankings-list {
   list-style: none;
-  padding: 0;
+  padding: 0 6px 0 0;
   margin: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+#gameover-rankings-list::-webkit-scrollbar {
+  width: 6px;
+}
+#gameover-rankings-list::-webkit-scrollbar-thumb {
+  background: #2a3140;
+  border-radius: 3px;
+}
+#gameover-rankings-list::-webkit-scrollbar-thumb:hover {
+  background: #3a4252;
 }
 #gameover-rankings-list li {
   display: grid;
@@ -350,7 +371,7 @@ body.hands-mode #video { left: 16px; }
 }
 .gameover-best.hidden { display: none; }
 #gameover-best-label {
-  color: #8a95a8;
+  color: #ffffff;
   text-transform: uppercase;
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -366,7 +387,7 @@ body.hands-mode #video { left: 16px; }
 }
 .gameover-score-label {
   font-size: 13px;
-  color: #8a95a8;
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -406,7 +427,7 @@ body.hands-mode #video { left: 16px; }
 .gameover-submit.hidden { display: none; }
 .gameover-submit label {
   font-size: 12px;
-  color: #8a95a8;
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 600;
@@ -495,8 +516,8 @@ body.hands-mode #video { left: 16px; }
 }
 .rankings-note {
   margin: 0;
-  font-size: 12px;
-  color: #6b7280;
+  font-size: 17px;
+  color: #ffffff;
   text-align: center;
 }
 
