@@ -172,7 +172,8 @@ body.hands-mode #video { left: 16px; }
 #game-over {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: transparent;
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,6 +183,7 @@ body.hands-mode #video { left: 16px; }
   flex-wrap: wrap;
   transition: opacity 0.25s;
 }
+#game-over > * { pointer-events: auto; }
 #game-over.hidden { opacity: 0; pointer-events: none; }
 
 .gameover-card {

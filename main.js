@@ -228,14 +228,20 @@ function setupSubmitUI(isNewBest, finalScore) {
     return;
   }
 
-  submitWrap.classList.remove('hidden');
   const stored = getStoredName();
-  nameInput.value = stored;
+
+  // If we know the player's name from a previous submission, just save the
+  // new score automatically — no extra click needed.
   if (stored) {
-    submitBtn.textContent = 'Update ranking';
-  } else {
-    submitBtn.textContent = 'Submit';
+    submitWrap.classList.add('hidden');
+    finalizeSubmission(stored, finalScore, { rankEl });
+    return;
   }
+
+  // First-time record: show the input so the player can pick a name.
+  submitWrap.classList.remove('hidden');
+  nameInput.value = '';
+  submitBtn.textContent = 'Submit';
 
   submitBtn.onclick = async () => {
     const name = nameInput.value.trim();
@@ -267,6 +273,19 @@ function setupSubmitUI(isNewBest, finalScore) {
       statusLine.className = 'gameover-submit-status error';
     }
   };
+}
+
+async function finalizeSubmission(name, finalScore, { rankEl }) {
+  const result = await submitScore(name, finalScore);
+  if (!result.ok) return;
+  const [rank] = await Promise.all([
+    fetchRank(finalScore),
+    renderSideRankings({ myName: name, myScore: finalScore, limit: 10 }),
+  ]);
+  if (rank && rankEl) {
+    rankEl.textContent = `Saved as ${name} · ranked #${rank} worldwide`;
+    rankEl.classList.remove('hidden');
+  }
 }
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => (
