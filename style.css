@@ -243,7 +243,8 @@ body.hands-mode #video { left: 16px; }
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 280px;
+  /* ~10 rows visible (each row ~34px + 4px gap); scroll for the rest */
+  max-height: 380px;
 }
 #gameover-rankings-list::-webkit-scrollbar {
   width: 6px;
