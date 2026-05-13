@@ -611,3 +611,18 @@ body.hands-mode #video { left: 16px; }
   #start-screen .instructions li { font-size: 14px; padding: 8px 12px; }
   #start-btn, #start-btn-nocam { padding: 12px 22px; font-size: 15px; }
 }
+
+/* ---------- Desktop only — slightly larger UI for readability ---------- */
+@media (min-width: 901px) {
+  #prompt { font-size: 40px; }
+  #prompt #country-flag { font-size: 44px; }
+  #country-info { font-size: 18px; margin-top: 14px; line-height: 1.6; }
+  #prompt-wrap {
+    padding: 22px 28px;
+    border-radius: 16px;
+    max-width: 560px;
+  }
+  #score-box { font-size: 26px; padding: 12px 22px; }
+  #countries-btn { font-size: 19px; padding: 12px 20px; }
+  .ui-right { gap: 14px; }
+}

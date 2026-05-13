@@ -910,6 +910,7 @@ async function beginGame({ withHands }) {
     }
     controlMode = 'hands';
     document.body.classList.add('hands-mode');
+    if (videoEl) videoEl.style.display = '';
   } else {
     controlMode = 'manual';
     document.body.classList.remove('hands-mode');
