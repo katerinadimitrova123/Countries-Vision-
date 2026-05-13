@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Countries Vision</title>
-  <link rel="stylesheet" href="./style.css?v=27" />
+  <link rel="stylesheet" href="./style.css?v=28" />
   <script type="importmap">
   {
     "imports": {
@@ -69,9 +69,14 @@
     <div class="gameover-card">
       <h2>Game Over</h2>
       <p>Out of lives!</p>
+      <div id="gameover-new-best" class="hidden">🎉 New personal best!</div>
       <div class="gameover-score">
         <span class="gameover-score-label">Final score</span>
         <span id="gameover-score-value">0</span>
+      </div>
+      <div id="gameover-best" class="gameover-best hidden">
+        <span id="gameover-best-label">Personal best</span>
+        <span id="gameover-best-value">0</span>
       </div>
       <button id="play-again-btn">Play again</button>
     </div>
@@ -98,6 +103,6 @@
   <div id="cursor" class="hidden"></div>
   <canvas id="globe"></canvas>
 
-  <script type="module" src="./main.js?v=44"></script>
+  <script type="module" src="./main.js?v=45"></script>
 </body>
 </html>

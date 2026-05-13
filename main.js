@@ -53,10 +53,24 @@ const { countryMeshes, ocean, lines } = await buildGlobe(globeGroup);
 
 // ---------- Game state ----------
 const MAX_LIVES = 3;
+const BEST_SCORE_KEY = 'countries-vision:best-score';
 let score = 0;
 let lives = MAX_LIVES;
 let gameIsOver = false;
 let targetCountry = null;
+
+function getBestScore() {
+  const v = parseInt(localStorage.getItem(BEST_SCORE_KEY) || '0', 10);
+  return Number.isFinite(v) && v > 0 ? v : 0;
+}
+
+function setBestScore(v) {
+  try {
+    localStorage.setItem(BEST_SCORE_KEY, String(v));
+  } catch {
+    // localStorage can throw in private mode — silently ignore
+  }
+}
 
 function renderLives() {
   if (!livesEl) return;
@@ -71,7 +85,36 @@ renderLives();
 
 function triggerGameOver() {
   gameIsOver = true;
+  const previousBest = getBestScore();
+  const isNewBest = score > previousBest;
+  if (isNewBest) setBestScore(score);
+
   gameOverScoreEl.textContent = String(score);
+
+  const bestRowEl = document.getElementById('gameover-best');
+  const bestLabelEl = document.getElementById('gameover-best-label');
+  const bestValueEl = document.getElementById('gameover-best-value');
+  const newBestEl = document.getElementById('gameover-new-best');
+  if (bestRowEl && bestValueEl && newBestEl && bestLabelEl) {
+    if (isNewBest && previousBest > 0) {
+      newBestEl.classList.remove('hidden');
+      bestRowEl.classList.remove('hidden');
+      bestLabelEl.textContent = 'Previous best';
+      bestValueEl.textContent = String(previousBest);
+      bestValueEl.classList.add('struck');
+    } else if (isNewBest && previousBest === 0) {
+      // First record ever — celebrate but don't show a "previous best" row
+      newBestEl.classList.remove('hidden');
+      bestRowEl.classList.add('hidden');
+    } else {
+      newBestEl.classList.add('hidden');
+      bestRowEl.classList.remove('hidden');
+      bestLabelEl.textContent = 'Personal best';
+      bestValueEl.textContent = String(previousBest);
+      bestValueEl.classList.remove('struck');
+    }
+  }
+
   gameOverEl.classList.remove('hidden');
 }
 
