@@ -127,7 +127,7 @@ body.hands-mode #video { left: 16px; }
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-end;
+  align-items: stretch;
 }
 
 #score-box {
@@ -144,9 +144,10 @@ body.hands-mode #video { left: 16px; }
 #lives-box {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
   background: rgba(20, 26, 38, 0.7);
-  padding: 8px 14px;
+  padding: 10px 18px;
   border-radius: 999px;
   border: 1px solid #2a3140;
   backdrop-filter: blur(8px);
@@ -626,7 +627,7 @@ body.hands-mode #video { left: 16px; }
   #prompt { font-size: 26px; }
   #prompt #country-flag { font-size: 30px; }
   #score-box { font-size: 18px; padding: 8px 14px; }
-  #lives-box { font-size: 18px; padding: 6px 12px; }
+  #lives-box { font-size: 18px; padding: 8px 14px; }
   #country-info { font-size: 14px; }
   #video {
     width: 160px;
@@ -660,7 +661,7 @@ body.hands-mode #video { left: 16px; }
   }
   #lives-box {
     font-size: 16px;
-    padding: 4px 10px;
+    padding: 6px 12px;
   }
   .ui-right {
     position: absolute;
@@ -738,7 +739,7 @@ body.hands-mode #video { left: 16px; }
     max-width: 560px;
   }
   #score-box { font-size: 26px; padding: 12px 22px; }
-  #lives-box { font-size: 26px; padding: 10px 18px; }
+  #lives-box { font-size: 26px; padding: 12px 22px; }
   #countries-btn { font-size: 19px; padding: 12px 20px; }
   .ui-right { gap: 14px; }
 
